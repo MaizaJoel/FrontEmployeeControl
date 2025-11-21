@@ -3,7 +3,7 @@ import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 
 const MainLayout = () => {
-    const [showMobileMenu, setShowMobileMenu] = useState(false);
+    const [showMobileMenu, setShowMobileMenu] = useState<boolean>(false);
 
     return (
         <div className="d-flex w-100" style={{ minHeight: '100vh', overflow: 'hidden' }}>

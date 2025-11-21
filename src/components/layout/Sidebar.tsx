@@ -1,6 +1,11 @@
 import { Link, useNavigate } from 'react-router-dom';
 
-const Sidebar = ({ isMobile, closeMobileMenu }) => {
+interface SidebarProps {
+    isMobile: boolean;
+    closeMobileMenu?: () => void;
+}
+
+const Sidebar = ({ isMobile, closeMobileMenu }: SidebarProps) => {
     const navigate = useNavigate();
 
     const handleLogout = () => {

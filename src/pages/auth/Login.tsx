@@ -1,14 +1,14 @@
-import { useState } from 'react';
-import axiosClient from '../../api/axiosClient'; // Asegúrate de que la ruta sea correcta (../../)
+import { useState, FormEvent } from 'react';
+import axiosClient from '../../api/axiosClient';
 import { useNavigate } from 'react-router-dom';
 
 const Login = () => {
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
-    const [error, setError] = useState('');
+    const [username, setUsername] = useState<string>('');
+    const [password, setPassword] = useState<string>('');
+    const [error, setError] = useState<string>('');
     const navigate = useNavigate();
 
-    const handleLogin = async (e) => {
+    const handleLogin = async (e: FormEvent) => {
         e.preventDefault(); // Evitar que se recargue la página
         setError('');
 
