@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import Login from './pages/auth/Login';
 import Dashboard from './pages/dashboard/Dashboard';
+import Cargos from './pages/rrhh/Cargos';
+import Empleados from './pages/rrhh/Empleados';
 import MainLayout from './components/layout/MainLayout';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
@@ -34,8 +36,8 @@ function App() {
                 <Route element={<RutaProtegida />}>
                     <Route element={<MainLayout />}>
                         <Route path="/dashboard" element={<Dashboard />} />
-                        <Route path="/empleados" element={<div><h1>Gestión de Empleados</h1></div>} />
-                        <Route path="/cargos" element={<div><h1>Gestión de Cargos</h1></div>} />
+                        <Route path="/empleados" element={<Empleados />} />
+                        <Route path="/cargos" element={<Cargos />} />
                         <Route path="/reportes" element={<div><h1>Reportes</h1></div>} />
                     </Route>
                 </Route>

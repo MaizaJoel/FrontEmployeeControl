@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Modal, Button, Form, Table, Alert, Spinner } from 'react-bootstrap';
-import { cargoService } from '../../services/cargoService';
+import { cargoService } from '../../services/CargoService';
 import { Cargo } from '../../types';
 
 const Cargos = () => {
