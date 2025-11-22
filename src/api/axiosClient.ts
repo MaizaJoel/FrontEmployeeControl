@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-// ⚠️ CAMBIA ESTA URL por la que te da Swagger (ej. https://localhost:7114/api)
+// ⚠️ Confirm this matches your Backend URL
 const BASE_URL = 'https://localhost:7114/api';
 
 const axiosClient = axios.create({
@@ -10,7 +10,7 @@ const axiosClient = axios.create({
     }
 });
 
-// Interceptor: Agrega el token automáticamente a cada petición
+// Request Interceptor: Adds the token
 axiosClient.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem('token');
@@ -19,7 +19,22 @@ axiosClient.interceptors.request.use(
         }
         return config;
     },
+    (error) => Promise.reject(error)
+);
+
+// Response Interceptor: Handles 401 errors
+axiosClient.interceptors.response.use(
+    (response) => response,
     (error) => {
+        // If the server says "401 Unauthorized" (Token expired/invalid)
+        if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+            // 1. Remove the bad token
+            localStorage.removeItem('token');
+
+            // 2. Force redirect to Login (optional but recommended)
+            // Note: Using window.location is a "hard" redirect, effective for security
+            window.location.href = '/';
+        }
         return Promise.reject(error);
     }
 );
