@@ -122,22 +122,31 @@ const EmpleadoModal = ({ show, handleClose, handleSave, empleadoToEdit }: Emplea
         };
 
         try {
-            // Wait for parent to save
             await handleSave(dataToSend as Empleado);
         } catch (err: any) {
             console.error("Error en modal:", err);
 
-            const serverMsg = err.response?.data?.Message || '';
+            const responseData = err.response?.data;
 
-            // Handle specific duplicate errors on fields
-            if (serverMsg === "La cédula ya se encuentra registrada") {
-                setErrors(prev => ({ ...prev, cedula: serverMsg }));
+            // 1. Intentamos leer el mensaje (probamos Mayúscula y minúscula)
+            const serverMsg = responseData?.Message || responseData?.message || '';
+
+            // 2. Detectamos errores específicos de lógica
+            if (serverMsg.includes("cédula ya se encuentra registrada")) {
+                setErrors(prev => ({ ...prev, cedula: "La cédula ya se encuentra registrada" }));
             }
-            else if (serverMsg === "El correo ya se encuentra registrado") {
-                setErrors(prev => ({ ...prev, email: serverMsg }));
+            else if (serverMsg.includes("correo ya se encuentra registrado")) {
+                setErrors(prev => ({ ...prev, email: "El correo ya se encuentra registrado" }));
             }
+            // 3. Detectamos errores de Validación de .NET (ej. campos requeridos que se nos pasaron)
+            else if (responseData?.errors) {
+                // responseData.errors es un objeto { Campo: ["Error 1", "Error 2"] }
+                const validationMsg = Object.values(responseData.errors).flat().join(', ');
+                setApiError(validationMsg || 'Error de validación en el servidor.');
+            }
+            // 4. Error genérico
             else {
-                setApiError(serverMsg || 'Ocurrió un error al guardar.');
+                setApiError(serverMsg || 'Ocurrió un error al guardar. Revise la consola.');
             }
         }
     };
