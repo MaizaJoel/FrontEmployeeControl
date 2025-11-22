@@ -1,33 +1,30 @@
 import { useEffect, useState } from 'react';
-import { Button, Table, Badge, Spinner } from 'react-bootstrap';
+import { Button, Table, Badge, Spinner, Alert } from 'react-bootstrap';
 import { adelantoService, Adelanto, CreateAdelanto } from '../../services/adelantoService';
-import AdelantoModal from '../../components/adelanto/AdelantoModal';
+import AdelantoModal from '../../components/adelantos/AdelantoModal';
 
 const Adelantos = () => {
     const [adelantos, setAdelantos] = useState<Adelanto[]>([]);
     const [loading, setLoading] = useState(false);
 
-    // Modal State
     const [showModal, setShowModal] = useState(false);
     const [editingAdelanto, setEditingAdelanto] = useState<Adelanto | null>(null);
 
-    useEffect(() => {
-        loadAdelantos();
-    }, []);
+    useEffect(() => { loadData(); }, []);
 
-    const loadAdelantos = async () => {
+    const loadData = async () => {
         setLoading(true);
         try {
             const data = await adelantoService.getAll();
             setAdelantos(data);
         } catch (error) {
-            console.error("Error loading adelantos", error);
+            console.error(error);
         } finally {
             setLoading(false);
         }
     };
 
-    // --- ACTIONS ---
+    // --- Acciones ---
 
     const handleCreate = () => {
         setEditingAdelanto(null);
@@ -40,46 +37,42 @@ const Adelantos = () => {
     };
 
     const handleSave = async (data: CreateAdelanto) => {
-        try {
-            if (editingAdelanto) {
-                await adelantoService.update(editingAdelanto.idAdelanto, data);
-            } else {
-                await adelantoService.create(data);
-            }
-            setShowModal(false);
-            loadAdelantos();
-        } catch (error) {
-            alert("Error al guardar solicitud");
+        // No usamos try/catch aquí, dejamos que el modal capture el error
+        if (editingAdelanto) {
+            await adelantoService.update(editingAdelanto.idAdelanto, data);
+        } else {
+            await adelantoService.create(data);
         }
+        setShowModal(false);
+        loadData();
     };
 
-    const handleCambiarEstado = async (id: number, estado: string) => {
-        if (!confirm(`¿Estás seguro de cambiar el estado a: ${estado}?`)) return;
+    const handleCambiarEstado = async (id: number, nuevoEstado: string) => {
+        if (!confirm(`¿Confirmar cambio de estado a: ${nuevoEstado}?`)) return;
         try {
-            await adelantoService.cambiarEstado(id, estado);
-            loadAdelantos();
-        } catch (error) {
-            alert("Error al cambiar estado");
+            await adelantoService.cambiarEstado(id, nuevoEstado);
+            loadData();
+        } catch (err) {
+            alert('Error al cambiar el estado.');
         }
     };
 
     const handleDelete = async (id: number) => {
-        if (!confirm("¿Eliminar esta solicitud? Solo es posible si está en estado 'Solicitado'.")) return;
+        if (!confirm("¿Eliminar esta solicitud?")) return;
         try {
             await adelantoService.delete(id);
-            loadAdelantos();
-        } catch (error) {
-            alert("No se pudo eliminar. Verifica que el estado sea 'Solicitado'.");
+            loadData();
+        } catch (err: any) {
+            alert(err.response?.data?.Message || 'No se pudo eliminar.');
         }
     };
 
-    // Helper para color del badge
-    const getBadgeColor = (estado: string) => {
+    const getBadge = (estado: string) => {
         switch (estado) {
             case 'Aprobado': return 'success';
             case 'Rechazado': return 'danger';
             case 'Pagado': return 'dark';
-            default: return 'warning'; // Solicitado
+            default: return 'warning';
         }
     };
 
@@ -90,16 +83,16 @@ const Adelantos = () => {
                 <Button variant="primary" onClick={handleCreate}>+ Nueva Solicitud</Button>
             </div>
 
-            {loading ? <Spinner animation="border" /> : (
+            {loading ? <div className="text-center py-5"><Spinner animation="border" /></div> : (
                 <div className="card shadow-sm">
-                    <Table hover responsive className="mb-0 align-middle">
+                    <Table hover className="mb-0 align-middle">
                         <thead className="table-light">
                             <tr>
                                 <th>Fecha</th>
                                 <th>Empleado</th>
                                 <th>Monto</th>
                                 <th>Estado</th>
-                                <th>Descripción</th>
+                                <th>Motivo</th>
                                 <th className="text-end">Acciones</th>
                             </tr>
                         </thead>
@@ -109,66 +102,33 @@ const Adelantos = () => {
                                     <td>{item.fechaSolicitud}</td>
                                     <td className="fw-bold">{item.nombreEmpleado}</td>
                                     <td className="text-primary fw-bold">${item.monto.toFixed(2)}</td>
-                                    <td>
-                                        <Badge bg={getBadgeColor(item.estado)}>{item.estado}</Badge>
-                                    </td>
+                                    <td><Badge bg={getBadge(item.estado)}>{item.estado}</Badge></td>
                                     <td><small className="text-muted">{item.descripcion}</small></td>
                                     <td className="text-end">
-                                        {/* SOLO mostrar acciones si NO está Pagado */}
-                                        {item.estado !== 'Pagado' && (
+                                        {item.estado === 'Solicitado' && (
                                             <>
-                                                {item.estado === 'Solicitado' && (
-                                                    <>
-                                                        <Button
-                                                            variant="outline-success" size="sm" className="me-1"
-                                                            title="Aprobar"
-                                                            onClick={() => handleCambiarEstado(item.idAdelanto, 'Aprobado')}
-                                                        >
-                                                            ✓
-                                                        </Button>
-                                                        <Button
-                                                            variant="outline-secondary" size="sm" className="me-1"
-                                                            title="Rechazar"
-                                                            onClick={() => handleCambiarEstado(item.idAdelanto, 'Rechazado')}
-                                                        >
-                                                            ✕
-                                                        </Button>
-                                                    </>
-                                                )}
-
-                                                <Button
-                                                    variant="outline-primary" size="sm" className="me-1"
-                                                    onClick={() => handleEdit(item)}
-                                                >
-                                                    Editar
-                                                </Button>
-
-                                                {item.estado === 'Solicitado' && (
-                                                    <Button
-                                                        variant="outline-danger" size="sm"
-                                                        onClick={() => handleDelete(item.idAdelanto)}
-                                                    >
-                                                        🗑️
-                                                    </Button>
-                                                )}
+                                                <Button variant="outline-success" size="sm" className="me-1" title="Aprobar"
+                                                    onClick={() => handleCambiarEstado(item.idAdelanto, 'Aprobado')}>✓</Button>
+                                                <Button variant="outline-secondary" size="sm" className="me-1" title="Rechazar"
+                                                    onClick={() => handleCambiarEstado(item.idAdelanto, 'Rechazado')}>✕</Button>
+                                                <Button variant="outline-primary" size="sm" className="me-1"
+                                                    onClick={() => handleEdit(item)}>Editar</Button>
+                                                <Button variant="outline-danger" size="sm"
+                                                    onClick={() => handleDelete(item.idAdelanto)}>🗑️</Button>
                                             </>
                                         )}
                                     </td>
                                 </tr>
                             ))}
-                            {adelantos.length === 0 && (
-                                <tr><td colSpan={6} className="text-center py-4 text-muted">No hay solicitudes</td></tr>
-                            )}
+                            {adelantos.length === 0 && <tr><td colSpan={6} className="text-center py-4 text-muted">No hay solicitudes.</td></tr>}
                         </tbody>
                     </Table>
                 </div>
             )}
 
             <AdelantoModal
-                show={showModal}
-                handleClose={() => setShowModal(false)}
-                handleSave={handleSave}
-                adelantoToEdit={editingAdelanto}
+                show={showModal} handleClose={() => setShowModal(false)}
+                handleSave={handleSave} adelantoToEdit={editingAdelanto}
             />
         </div>
     );

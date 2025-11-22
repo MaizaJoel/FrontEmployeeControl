@@ -115,6 +115,7 @@ const EmpleadoModal = ({ show, handleClose, handleSave, empleadoToEdit }: Emplea
         if (!validateForm()) return;
 
         setApiError('');
+        setErrors({});
 
         const dataToSend = {
             ...formData,
@@ -124,29 +125,30 @@ const EmpleadoModal = ({ show, handleClose, handleSave, empleadoToEdit }: Emplea
         try {
             await handleSave(dataToSend as Empleado);
         } catch (err: any) {
-            console.error("Error en modal:", err);
+            // 👇 DEBUG: Esto nos mostrará en la consola (F12) qué llega exactamente
+            console.log("FULL ERROR:", err.response);
 
             const responseData = err.response?.data;
 
-            // 1. Intentamos leer el mensaje (probamos Mayúscula y minúscula)
-            const serverMsg = responseData?.Message || responseData?.message || '';
+            // 1. Normalizamos el mensaje a minúsculas para facilitar la búsqueda
+            const rawMsg = responseData?.Message || responseData?.message || '';
+            const serverMsg = rawMsg.toString().toLowerCase();
 
-            // 2. Detectamos errores específicos de lógica
-            if (serverMsg.includes("cédula ya se encuentra registrada")) {
-                setErrors(prev => ({ ...prev, cedula: "La cédula ya se encuentra registrada" }));
+            // 2. Búsqueda simplificada (palabras clave)
+            if (serverMsg.includes("cédula") && serverMsg.includes("registrada")) {
+                setErrors(prev => ({ ...prev, cedula: "La cédula ya existe en el sistema." }));
             }
-            else if (serverMsg.includes("correo ya se encuentra registrado")) {
-                setErrors(prev => ({ ...prev, email: "El correo ya se encuentra registrado" }));
+            else if (serverMsg.includes("correo") && serverMsg.includes("registrado")) {
+                setErrors(prev => ({ ...prev, email: "El correo ya existe en el sistema." }));
             }
-            // 3. Detectamos errores de Validación de .NET (ej. campos requeridos que se nos pasaron)
             else if (responseData?.errors) {
-                // responseData.errors es un objeto { Campo: ["Error 1", "Error 2"] }
+                // Errores automáticos de .NET (campos requeridos, etc)
                 const validationMsg = Object.values(responseData.errors).flat().join(', ');
-                setApiError(validationMsg || 'Error de validación en el servidor.');
+                setApiError(validationMsg || 'Faltan datos requeridos.');
             }
-            // 4. Error genérico
             else {
-                setApiError(serverMsg || 'Ocurrió un error al guardar. Revise la consola.');
+                // Error desconocido (o el 500 si sigue pasando)
+                setApiError(rawMsg || 'Error del servidor. Intente nuevamente.');
             }
         }
     };

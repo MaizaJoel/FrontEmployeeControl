@@ -3,6 +3,7 @@ import Login from './pages/auth/Login';
 import Dashboard from './pages/dashboard/Dashboard';
 import Cargos from './pages/rrhh/Cargos';
 import Empleados from './pages/rrhh/Empleados';
+import Adelantos from './pages/rrhh/Adelantos';
 import MainLayout from './components/layout/MainLayout';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
@@ -38,6 +39,7 @@ function App() {
                         <Route path="/dashboard" element={<Dashboard />} />
                         <Route path="/empleados" element={<Empleados />} />
                         <Route path="/cargos" element={<Cargos />} />
+                        <Route path="/adelantos" element={<Adelantos />} />
                         <Route path="/reportes" element={<div><h1>Reportes</h1></div>} />
                     </Route>
                 </Route>

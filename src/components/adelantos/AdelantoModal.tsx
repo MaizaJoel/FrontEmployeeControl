@@ -1,80 +1,103 @@
 import { useEffect, useState } from 'react';
-import { Modal, Button, Form } from 'react-bootstrap';
-import { Adelanto, CreateAdelanto } from '../../services/adelantoService';
+import { Modal, Button, Form, Alert, Spinner } from 'react-bootstrap';
+import { CreateAdelanto, Adelanto } from '../../services/adelantoService';
 import { empleadoService } from '../../services/empleadoService';
 import { Empleado } from '../../types';
 
 interface Props {
     show: boolean;
     handleClose: () => void;
-    handleSave: (data: CreateAdelanto) => void;
+    handleSave: (data: CreateAdelanto) => Promise<void>;
     adelantoToEdit: Adelanto | null;
 }
 
 const AdelantoModal = ({ show, handleClose, handleSave, adelantoToEdit }: Props) => {
+    // Datos maestros
     const [empleados, setEmpleados] = useState<Empleado[]>([]);
+    const [loadingData, setLoadingData] = useState(false);
 
-    // Form State
+    // Formulario
     const [idEmpleado, setIdEmpleado] = useState<number>(0);
     const [monto, setMonto] = useState<number>(0);
     const [descripcion, setDescripcion] = useState('');
+    const [error, setError] = useState('');
 
+    // Cargar empleados al iniciar
     useEffect(() => {
-        loadEmpleados();
-    }, []);
+        if (show) loadEmpleados();
+    }, [show]);
 
+    // Rellenar formulario si es edición
     useEffect(() => {
         if (show) {
             if (adelantoToEdit) {
-                // Modo Edición
                 setIdEmpleado(adelantoToEdit.idEmpleado);
                 setMonto(adelantoToEdit.monto);
                 setDescripcion(adelantoToEdit.descripcion);
             } else {
-                // Modo Crear (Reset)
+                // Reset
                 setMonto(0);
                 setDescripcion('');
-                // Si hay empleados, seleccionar el primero por defecto
+                // Si ya hay empleados, seleccionar el primero por defecto para agilizar
                 if (empleados.length > 0) setIdEmpleado(empleados[0].idEmpleado);
             }
+            setError('');
         }
-    }, [show, adelantoToEdit, empleados]);
+    }, [adelantoToEdit, show, empleados]);
 
     const loadEmpleados = async () => {
+        setLoadingData(true);
         try {
             const data = await empleadoService.getAll();
-            setEmpleados(data);
-            // Si es nuevo y no hay empleado seleccionado, setear el primero
-            if (!adelantoToEdit && data.length > 0 && idEmpleado === 0) {
-                setIdEmpleado(data[0].idEmpleado);
-            }
-        } catch (error) {
-            console.error("Error cargando empleados", error);
+            // Solo mostrar empleados ACTIVOS
+            setEmpleados(data.filter(e => e.activo));
+        } catch (err) {
+            setError('No se pudo cargar la lista de empleados.');
+        } finally {
+            setLoadingData(false);
         }
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (monto <= 0) {
-            alert("El monto debe ser mayor a 0");
+        if (idEmpleado === 0) {
+            setError('Seleccione un empleado.');
             return;
         }
-        handleSave({ idEmpleado, monto, descripcion });
+        if (monto <= 0 || monto > 2000) {
+            setError('El monto debe ser mayor a 0 y menor a 2000.');
+            return;
+        }
+        if (!descripcion.trim()) {
+            setError('Ingrese un motivo.');
+            return;
+        }
+
+        try {
+            await handleSave({ idEmpleado, monto, descripcion });
+            // El padre cerrará el modal si todo sale bien
+        } catch (err: any) {
+            const msg = err.response?.data?.Message || err.response?.data?.message || 'Error al guardar.';
+            setError(msg);
+        }
     };
 
     return (
-        <Modal show={show} onHide={handleClose}>
+        <Modal show={show} onHide={handleClose} backdrop="static">
             <Form onSubmit={handleSubmit}>
                 <Modal.Header closeButton>
-                    <Modal.Title>{adelantoToEdit ? 'Editar Solicitud' : 'Solicitar Adelanto'}</Modal.Title>
+                    <Modal.Title>{adelantoToEdit ? 'Editar Solicitud' : 'Nueva Solicitud'}</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
+                    {error && <Alert variant="danger">{error}</Alert>}
+                    {loadingData && <div className="text-center mb-2"><Spinner size="sm" animation="border" /> Cargando empleados...</div>}
+
                     <Form.Group className="mb-3">
                         <Form.Label>Empleado</Form.Label>
                         <Form.Select
                             value={idEmpleado}
                             onChange={e => setIdEmpleado(Number(e.target.value))}
-                            disabled={!!adelantoToEdit} // No cambiar empleado al editar
+                            disabled={!!adelantoToEdit || loadingData} // No cambiar empleado al editar
                         >
                             <option value={0}>Seleccione...</option>
                             {empleados.map(e => (
@@ -88,22 +111,19 @@ const AdelantoModal = ({ show, handleClose, handleSave, adelantoToEdit }: Props)
                     <Form.Group className="mb-3">
                         <Form.Label>Monto ($)</Form.Label>
                         <Form.Control
-                            type="number"
-                            min="1" max="2000"
+                            type="number" step="0.01" min="1"
                             value={monto}
                             onChange={e => setMonto(parseFloat(e.target.value))}
-                            required
                         />
                     </Form.Group>
 
                     <Form.Group className="mb-3">
-                        <Form.Label>Motivo / Descripción</Form.Label>
+                        <Form.Label>Motivo</Form.Label>
                         <Form.Control
-                            as="textarea" rows={3}
+                            as="textarea" rows={2}
                             value={descripcion}
                             onChange={e => setDescripcion(e.target.value)}
-                            placeholder="Ej: Emergencia médica, reparación vehículo..."
-                            required
+                            placeholder="Ej: Emergencia médica..."
                         />
                     </Form.Group>
                 </Modal.Body>
