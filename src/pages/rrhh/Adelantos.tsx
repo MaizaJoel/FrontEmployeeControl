@@ -24,8 +24,6 @@ const Adelantos = () => {
         }
     };
 
-    // --- Acciones ---
-
     const handleCreate = () => {
         setEditingAdelanto(null);
         setShowModal(true);
@@ -37,7 +35,6 @@ const Adelantos = () => {
     };
 
     const handleSave = async (data: CreateAdelanto) => {
-        // No usamos try/catch aquí, dejamos que el modal capture el error
         if (editingAdelanto) {
             await adelantoService.update(editingAdelanto.idAdelanto, data);
         } else {
@@ -48,7 +45,8 @@ const Adelantos = () => {
     };
 
     const handleCambiarEstado = async (id: number, nuevoEstado: string) => {
-        if (!confirm(`¿Confirmar cambio de estado a: ${nuevoEstado}?`)) return;
+        // Si ya está en ese estado, no hacemos nada
+        if (!confirm(`¿Cambiar estado a: ${nuevoEstado}?`)) return;
         try {
             await adelantoService.cambiarEstado(id, nuevoEstado);
             loadData();
@@ -58,12 +56,14 @@ const Adelantos = () => {
     };
 
     const handleDelete = async (id: number) => {
-        if (!confirm("¿Eliminar esta solicitud?")) return;
+        if (!confirm("¿Eliminar esta solicitud permanentemente?")) return;
         try {
             await adelantoService.delete(id);
             loadData();
         } catch (err: any) {
-            alert(err.response?.data?.Message || 'No se pudo eliminar.');
+            // 👇 MEJORA: Leemos el mensaje real del servidor
+            const msg = err.response?.data?.Message || err.response?.data?.message || 'No se pudo eliminar.';
+            alert(`Error: ${msg}`);
         }
     };
 
@@ -104,17 +104,39 @@ const Adelantos = () => {
                                     <td className="text-primary fw-bold">${item.monto.toFixed(2)}</td>
                                     <td><Badge bg={getBadge(item.estado)}>{item.estado}</Badge></td>
                                     <td><small className="text-muted">{item.descripcion}</small></td>
+
                                     <td className="text-end">
-                                        {item.estado === 'Solicitado' && (
+                                        {/* 👇 LÓGICA DE BOTONES MEJORADA */}
+
+                                        {/* Solo permitimos acciones si NO está Pagado */}
+                                        {item.estado !== 'Pagado' && (
                                             <>
-                                                <Button variant="outline-success" size="sm" className="me-1" title="Aprobar"
-                                                    onClick={() => handleCambiarEstado(item.idAdelanto, 'Aprobado')}>✓</Button>
-                                                <Button variant="outline-secondary" size="sm" className="me-1" title="Rechazar"
-                                                    onClick={() => handleCambiarEstado(item.idAdelanto, 'Rechazado')}>✕</Button>
+                                                {/* Aprobar: Solo si no está aprobado aún */}
+                                                {item.estado !== 'Aprobado' && (
+                                                    <Button variant="outline-success" size="sm" className="me-1" title="Aprobar"
+                                                        onClick={() => handleCambiarEstado(item.idAdelanto, 'Aprobado')}>✓</Button>
+                                                )}
+
+                                                {/* Rechazar: Siempre visible (para cancelar aprobaciones) */}
+                                                {item.estado !== 'Rechazado' && (
+                                                    <Button variant="outline-secondary" size="sm" className="me-1" title="Rechazar / Cancelar"
+                                                        onClick={() => handleCambiarEstado(item.idAdelanto, 'Rechazado')}>✕</Button>
+                                                )}
+
+                                                {/* Editar: Siempre visible (corregir montos) */}
                                                 <Button variant="outline-primary" size="sm" className="me-1"
                                                     onClick={() => handleEdit(item)}>Editar</Button>
-                                                <Button variant="outline-danger" size="sm"
-                                                    onClick={() => handleDelete(item.idAdelanto)}>🗑️</Button>
+
+                                                {/* AHORA: Mostramos el botón si es Solicitado O Rechazado */}
+                                                {(item.estado === 'Solicitado' || item.estado === 'Rechazado') && (
+                                                    <Button
+                                                        variant="outline-danger" size="sm"
+                                                        onClick={() => handleDelete(item.idAdelanto)}
+                                                        title="Eliminar registro"
+                                                    >
+                                                        🗑️
+                                                    </Button>
+                                                )}
                                             </>
                                         )}
                                     </td>

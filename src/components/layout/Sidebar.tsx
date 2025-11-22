@@ -48,6 +48,11 @@ const Sidebar = ({ isMobile, closeMobileMenu }: SidebarProps) => {
                     </Link>
                 </li>
                 <li className="nav-item mb-1">
+                    <Link to="/adelantos" className={navLinkClass} onClick={closeMobileMenu}>
+                        Adelantos
+                    </Link>
+                </li>
+                <li className="nav-item mb-1">
                     <Link to="/reportes" className={navLinkClass} onClick={closeMobileMenu}>
                         Reportes
                     </Link>

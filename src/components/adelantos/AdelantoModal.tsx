@@ -38,7 +38,7 @@ const AdelantoModal = ({ show, handleClose, handleSave, adelantoToEdit }: Props)
                 // Reset
                 setMonto(0);
                 setDescripcion('');
-                // Si ya hay empleados, seleccionar el primero por defecto para agilizar
+                // Si ya hay empleados, seleccionar el primero por defecto
                 if (empleados.length > 0) setIdEmpleado(empleados[0].idEmpleado);
             }
             setError('');
@@ -60,16 +60,15 @@ const AdelantoModal = ({ show, handleClose, handleSave, adelantoToEdit }: Props)
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setError('');
+
+        // Validaciones locales básicas
         if (idEmpleado === 0) {
             setError('Seleccione un empleado.');
             return;
         }
-        if (monto <= 0 || monto > 2000) {
-            setError('El monto debe ser mayor a 0 y menor a 2000.');
-            return;
-        }
-        if (!descripcion.trim()) {
-            setError('Ingrese un motivo.');
+        if (monto <= 0) {
+            setError('El monto debe ser mayor a 0.');
             return;
         }
 
@@ -77,8 +76,19 @@ const AdelantoModal = ({ show, handleClose, handleSave, adelantoToEdit }: Props)
             await handleSave({ idEmpleado, monto, descripcion });
             // El padre cerrará el modal si todo sale bien
         } catch (err: any) {
-            const msg = err.response?.data?.Message || err.response?.data?.message || 'Error al guardar.';
-            setError(msg);
+            console.error("Error creando adelanto:", err);
+            const responseData = err.response?.data;
+
+            // Lógica robusta para leer errores de .NET
+            if (responseData?.errors) {
+                // Errores de validación (ej. Descripción muy corta)
+                const validationMsg = Object.values(responseData.errors).flat().join(', ');
+                setError(validationMsg || 'Error de validación en los datos.');
+            } else {
+                // Errores lógicos (ej. Empleado inactivo)
+                const msg = responseData?.Message || responseData?.message || 'Error al guardar.';
+                setError(msg);
+            }
         }
     };
 
@@ -97,7 +107,7 @@ const AdelantoModal = ({ show, handleClose, handleSave, adelantoToEdit }: Props)
                         <Form.Select
                             value={idEmpleado}
                             onChange={e => setIdEmpleado(Number(e.target.value))}
-                            disabled={!!adelantoToEdit || loadingData} // No cambiar empleado al editar
+                            disabled={!!adelantoToEdit || loadingData}
                         >
                             <option value={0}>Seleccione...</option>
                             {empleados.map(e => (
@@ -111,10 +121,11 @@ const AdelantoModal = ({ show, handleClose, handleSave, adelantoToEdit }: Props)
                     <Form.Group className="mb-3">
                         <Form.Label>Monto ($)</Form.Label>
                         <Form.Control
-                            type="number" step="0.01" min="1"
+                            type="number" step="0.01" min="1" max="2000"
                             value={monto}
                             onChange={e => setMonto(parseFloat(e.target.value))}
                         />
+                        <Form.Text className="text-muted">Máximo $2000</Form.Text>
                     </Form.Group>
 
                     <Form.Group className="mb-3">
@@ -125,6 +136,7 @@ const AdelantoModal = ({ show, handleClose, handleSave, adelantoToEdit }: Props)
                             onChange={e => setDescripcion(e.target.value)}
                             placeholder="Ej: Emergencia médica..."
                         />
+                        <Form.Text className="text-muted">Mínimo 5 caracteres</Form.Text>
                     </Form.Group>
                 </Modal.Body>
                 <Modal.Footer>
