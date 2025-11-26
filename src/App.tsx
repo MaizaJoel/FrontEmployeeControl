@@ -6,6 +6,8 @@ import Empleados from './pages/rrhh/Empleados';
 import Adelantos from './pages/rrhh/Adelantos';
 import MainLayout from './components/layout/MainLayout';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import KioscoLayout from './components/layout/KioscoLayout';
+import Kiosco from './pages/kiosco/Kiosco';
 
 /* 1. Componente de Seguridad (Rutas Privadas)
 Si NO hay token, te manda al Login.*/
@@ -30,6 +32,11 @@ function App() {
                 {/* Usan un layout simple o ninguno */}
                 <Route element={<RutaPublica />}>
                     <Route path="/" element={<Login />} />
+                </Route>
+
+                {/* GRUPO 3: Kiosco (Público) */}
+                <Route element={<KioscoLayout />}>
+                    <Route path="/kiosco" element={<Kiosco />} />
                 </Route>
 
                 {/* GRUPO 2: Rutas Privadas (Sistema) */}
