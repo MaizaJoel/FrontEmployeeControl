@@ -8,6 +8,7 @@ import MainLayout from './components/layout/MainLayout';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import KioscoLayout from './components/layout/KioscoLayout';
 import Kiosco from './pages/kiosco/Kiosco';
+import Fichajes from './pages/rrhh/Fichajes';
 
 /* 1. Componente de Seguridad (Rutas Privadas)
 Si NO hay token, te manda al Login.*/
@@ -45,6 +46,7 @@ function App() {
                     <Route element={<MainLayout />}>
                         <Route path="/dashboard" element={<Dashboard />} />
                         <Route path="/empleados" element={<Empleados />} />
+                        <Route path="/fichajes" element={<Fichajes />} />
                         <Route path="/cargos" element={<Cargos />} />
                         <Route path="/adelantos" element={<Adelantos />} />
                         <Route path="/reportes" element={<div><h1>Reportes</h1></div>} />

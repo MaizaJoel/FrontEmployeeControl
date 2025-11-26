@@ -43,6 +43,11 @@ const Sidebar = ({ isMobile, closeMobileMenu }: SidebarProps) => {
                     </Link>
                 </li>
                 <li className="nav-item mb-1">
+                    <Link to="/fichajes" className={navLinkClass} onClick={closeMobileMenu}>
+                        Asistencia
+                    </Link>
+                </li>
+                <li className="nav-item mb-1">
                     <Link to="/cargos" className={navLinkClass} onClick={closeMobileMenu}>
                         Cargos
                     </Link>
