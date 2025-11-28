@@ -5,21 +5,19 @@ import { empleadoService } from '../../services/empleadoService';
 import { Empleado } from '../../types';
 
 const Fichajes = () => {
-    // Datos
     const [fichajes, setFichajes] = useState<FichajeLog[]>([]);
     const [empleados, setEmpleados] = useState<Empleado[]>([]);
 
     // Filtros
     const [filtroEmpleado, setFiltroEmpleado] = useState<number>(0);
-    const [fechaInicio, setFechaInicio] = useState(new Date().toISOString().split('T')[0]); // Hoy
+    const [fechaInicio, setFechaInicio] = useState(new Date().toISOString().split('T')[0]);
     const [fechaFin, setFechaFin] = useState(new Date().toISOString().split('T')[0]);
 
-    // UI
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [showModal, setShowModal] = useState(false);
 
-    // Edición/Creación
+    // Formulario Modal
     const [editingFichaje, setEditingFichaje] = useState<FichajeLog | null>(null);
     const [formFecha, setFormFecha] = useState('');
     const [formHora, setFormHora] = useState('');
@@ -28,7 +26,7 @@ const Fichajes = () => {
 
     useEffect(() => {
         loadMaestros();
-        loadData(); // Cargar inicial
+        loadData();
     }, []);
 
     const loadMaestros = async () => {
@@ -55,13 +53,13 @@ const Fichajes = () => {
         }
     };
 
-    // --- MODAL HANDLERS ---
+    // --- Acciones del Modal ---
     const handleOpenCreate = () => {
         setEditingFichaje(null);
         setFormIdEmpleado(filtroEmpleado || (empleados[0]?.idEmpleado || 0));
         const now = new Date();
-        setFormFecha(now.toISOString().split('T')[0]);
-        setFormHora(now.toTimeString().slice(0, 5));
+        setFormFecha(now.toLocaleDateString('en-CA')); // YYYY-MM-DD
+        setFormHora(now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })); // HH:mm
         setFormTipo('ENTRADA');
         setShowModal(true);
     };
@@ -69,16 +67,16 @@ const Fichajes = () => {
     const handleOpenEdit = (log: FichajeLog) => {
         setEditingFichaje(log);
         setFormIdEmpleado(log.idEmpleado);
-
         const dt = new Date(log.timestampUtc);
-        setFormFecha(dt.toLocaleDateString('en-CA')); // YYYY-MM-DD local
-        setFormHora(dt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })); // HH:mm
+        setFormFecha(dt.toLocaleDateString('en-CA'));
+        setFormHora(dt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }));
         setFormTipo(log.tipoEvento);
         setShowModal(true);
     };
 
     const handleSave = async () => {
         try {
+            // Construir fecha local ISO
             const fechaHoraLocal = new Date(`${formFecha}T${formHora}:00`).toISOString();
             const payload = {
                 idEmpleado: formIdEmpleado,
@@ -99,14 +97,13 @@ const Fichajes = () => {
     };
 
     const handleDelete = async (id: number) => {
-        if (!confirm("¿Eliminar este registro?")) return;
+        if (!confirm("¿Eliminar este registro permanentemente?")) return;
         try {
             await fichajeService.delete(id);
             loadData();
         } catch (e) { alert("Error al eliminar"); }
     };
 
-    // --- RENDER ---
     const formatDate = (isoString: string) => {
         return new Date(isoString).toLocaleString('es-EC');
     };
@@ -177,13 +174,13 @@ const Fichajes = () => {
                                     </td>
                                 </tr>
                             ))}
-                            {fichajes.length === 0 && <tr><td colSpan={5} className="text-center py-4">No hay registros en este rango.</td></tr>}
+                            {fichajes.length === 0 && <tr><td colSpan={5} className="text-center py-4">No hay registros.</td></tr>}
                         </tbody>
                     </Table>
                 </Card>
             )}
 
-            {/* MODAL EDICIÓN/CREACIÓN */}
+            {/* MODAL */}
             <Modal show={showModal} onHide={() => setShowModal(false)}>
                 <Modal.Header closeButton>
                     <Modal.Title>{editingFichaje ? 'Editar Fichaje' : 'Fichaje Manual'}</Modal.Title>
@@ -195,7 +192,7 @@ const Fichajes = () => {
                             <Form.Select
                                 value={formIdEmpleado}
                                 onChange={e => setFormIdEmpleado(Number(e.target.value))}
-                                disabled={!!editingFichaje} // No cambiar empleado al editar
+                                disabled={!!editingFichaje}
                             >
                                 <option value={0}>Seleccione...</option>
                                 {empleados.map(e => <option key={e.idEmpleado} value={e.idEmpleado}>{e.apellido} {e.nombre}</option>)}

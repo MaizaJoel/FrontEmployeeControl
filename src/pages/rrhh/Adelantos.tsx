@@ -61,7 +61,6 @@ const Adelantos = () => {
             await adelantoService.delete(id);
             loadData();
         } catch (err: any) {
-            // 👇 MEJORA: Leemos el mensaje real del servidor
             const msg = err.response?.data?.Message || err.response?.data?.message || 'No se pudo eliminar.';
             alert(`Error: ${msg}`);
         }

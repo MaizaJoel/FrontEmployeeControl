@@ -1,48 +1,62 @@
-import { useState, FormEvent } from 'react';
-import axiosClient from '../../api/axiosClient';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Alert, Spinner } from 'react-bootstrap';
+import axiosClient from '../../api/axiosClient';
+import { useAuth } from '../../context/AuthContext';
 
 const Login = () => {
-    const [username, setUsername] = useState<string>('');
-    const [password, setPassword] = useState<string>('');
-    const [error, setError] = useState<string>('');
+    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
+    const { login } = useAuth();
 
-    const handleLogin = async (e: FormEvent) => {
-        e.preventDefault(); // Evitar que se recargue la página
+    const handleLogin = async (e: React.FormEvent) => {
+        e.preventDefault();
         setError('');
+        setLoading(true);
 
         try {
-            // Llamamos a TU endpoint de C#
             const response = await axiosClient.post('/Auth/login', {
                 username: username,
                 password: password
             });
 
-            // Si llegamos aquí, es éxito (200 OK)
             const token = response.data.token;
-
-            // Guardamos la llave en el navegador
-            localStorage.setItem('token', token);
-
-            // Redirigimos al Dashboard
+            login(token); 
             navigate('/dashboard');
 
-        } catch (err) {
-            // Si falla (401 Unauthorized), mostramos error
+        } catch (err: any) {
             console.error(err);
-            setError('Usuario o contraseña incorrectos.');
+            if (err.response && err.response.status === 401) {
+                setError('Usuario o contraseña incorrectos.');
+            } else {
+                setError('Error al iniciar sesión. Intente nuevamente.');
+            }
+        } finally {
+            setLoading(false);
         }
     };
 
     return (
-        // vh-100 = 100% de la altura de la ventana
-        // w-100 = 100% del ancho
-        <div className="d-flex justify-content-center align-items-center vh-100 w-100 bg-light">
-            <div className="card p-4 shadow" style={{ width: '400px', maxWidth: '90%' }}>
-                <h2 className="text-center mb-4">Iniciar Sesión</h2>
+        <div
+            className="d-flex justify-content-center align-items-center vh-100 w-100"
+            style={{
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+            }}
+        >
+            <div className="card p-4 shadow-lg animate-fade-in" style={{ width: '420px', maxWidth: '90%' }}>
+                <div className="text-center mb-4">
+                    <h2 className="gradient-text mb-2">RRHH System</h2>
+                    <p className="text-muted">Ingrese sus credenciales</p>
+                </div>
 
-                {error && <div className="alert alert-danger">{error}</div>}
+                {error && (
+                    <Alert variant="danger" className="animate-fade-in" dismissible onClose={() => setError('')}>
+                        {error}
+                    </Alert>
+                )}
 
                 <form onSubmit={handleLogin}>
                     <div className="mb-3">
@@ -53,9 +67,10 @@ const Login = () => {
                             value={username}
                             onChange={(e) => setUsername(e.target.value)}
                             required
+                            autoFocus
                         />
                     </div>
-                    <div className="mb-3">
+                    <div className="mb-4">
                         <label className="form-label">Contraseña</label>
                         <input
                             type="password"
@@ -65,10 +80,24 @@ const Login = () => {
                             required
                         />
                     </div>
-                    <button type="submit" className="btn btn-primary w-100">
-                        Ingresar
+                    <button
+                        type="submit"
+                        className="btn btn-primary w-100 py-2"
+                        disabled={loading}
+                    >
+                        {loading ? (
+                            <>
+                                <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" className="me-2" />
+                                Iniciando sesión...
+                            </>
+                        ) : (
+                            'Ingresar'
+                        )}
                     </button>
                 </form>
+                <div className="text-center mt-4">
+                    <small className="text-muted">Sistema de Control de Empleados v1.0</small>
+                </div>
             </div>
         </div>
     );
