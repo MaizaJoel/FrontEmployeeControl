@@ -1,0 +1,49 @@
+/* Custom Table Styles for better responsiveness */
+
+.custom-table-container {
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    /* Keeps the border radius on the card/container */
+    box-shadow: var(--shadow-sm);
+    background-color: var(--color-white);
+}
+
+/* 
+   Ensure the table wrapper handles overflow correctly.
+   This mimics Bootstrap's .table-responsive but with custom tweaking if needed.
+*/
+.custom-table-responsive {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Optional: Prevent text wrapping in cells for cleaner look, forcing scroll */
+.table-nowrap th,
+.table-nowrap td {
+    white-space: nowrap;
+}
+
+/* Improve scrollbar appearance for tables */
+.custom-table-responsive::-webkit-scrollbar,
+.table-responsive::-webkit-scrollbar {
+    height: 8px;
+}
+
+.custom-table-responsive::-webkit-scrollbar-track,
+.table-responsive::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.custom-table-responsive::-webkit-scrollbar-thumb,
+.table-responsive::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+.custom-table-responsive::-webkit-scrollbar-thumb:hover,
+.table-responsive::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}

@@ -43,7 +43,7 @@ const Roles = () => {
             return;
         }
         if (!confirm(`¿Eliminar rol ${name}?`)) return;
-        
+
         try {
             await roleService.delete(id);
             loadRoles();
@@ -54,7 +54,7 @@ const Roles = () => {
     };
 
     return (
-        <div className="container-fluid p-4 animate-fade-in">
+        <div className="animate-fade-in">
             <div className="d-flex justify-content-between align-items-center mb-4">
                 <h2 className="text-primary fw-bold">
                     <i className="bi bi-shield-lock me-2"></i>
@@ -72,7 +72,7 @@ const Roles = () => {
                 <div className="text-center py-5"><Spinner animation="border" /></div>
             ) : (
                 <div className="card shadow-sm border-0">
-                    <Table hover responsive className="mb-0">
+                    <Table hover responsive className="mb-0 table-nowrap">
                         <thead className="bg-light">
                             <tr>
                                 <th>ID</th>
@@ -86,7 +86,7 @@ const Roles = () => {
                                     <td><small className="text-muted">{r.id}</small></td>
                                     <td className="fw-bold">{r.name}</td>
                                     <td className="text-end">
-                                        <Button variant="link" className="text-danger p-0" 
+                                        <Button variant="link" className="text-danger p-0"
                                             onClick={() => handleDelete(r.id, r.name)}
                                             disabled={r.name === 'Admin' || r.name === 'Employee'}
                                         >
@@ -108,11 +108,11 @@ const Roles = () => {
                     <Modal.Body>
                         <Form.Group>
                             <Form.Label>Nombre del Rol</Form.Label>
-                            <Form.Control 
-                                type="text" 
-                                value={newRoleName} 
-                                onChange={(e) => setNewRoleName(e.target.value)} 
-                                required 
+                            <Form.Control
+                                type="text"
+                                value={newRoleName}
+                                onChange={(e) => setNewRoleName(e.target.value)}
+                                required
                                 autoFocus
                             />
                         </Form.Group>

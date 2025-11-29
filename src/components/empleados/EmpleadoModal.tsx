@@ -282,6 +282,15 @@ const EmpleadoModal = ({ show, handleClose, handleSave, empleadoToEdit }: Emplea
                     <Button variant="primary" type="submit">
                         {isEditMode ? 'Guardar Cambios' : 'Crear Empleado'}
                     </Button>
+
+                    {!isEditMode && (
+                        <div className="alert alert-info mt-3 py-2 small">
+                            <i className="bi bi-info-circle me-2"></i>
+                            Al crear el empleado, se generará automáticamente su usuario de sistema.
+                            <br />
+                            <strong>Contraseña temporal:</strong> (Su número de cédula) + *Aa
+                        </div>
+                    )}
                 </Modal.Footer>
             </Form>
         </Modal>

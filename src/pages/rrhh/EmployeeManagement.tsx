@@ -3,6 +3,7 @@ import { Tab, Tabs } from 'react-bootstrap';
 import Empleados from './Empleados';
 import Cargos from './Cargos';
 import Roles from './Roles';
+import UserRoles from './UserRoles';
 import Adelantos from './Adelantos';
 import { useAuth } from '../../context/AuthContext';
 
@@ -10,6 +11,40 @@ const EmployeeManagement = () => {
     const [key, setKey] = useState('empleados');
     const { user } = useAuth();
     const isAdmin = user?.role === 'Admin';
+
+    // Definimos la configuración de las pestañas
+    const tabsConfig = [
+        {
+            key: 'empleados',
+            title: 'Lista de Empleados',
+            component: <Empleados />,
+            visible: true // Siempre visible
+        },
+        {
+            key: 'cargos',
+            title: 'Cargos (Puestos)',
+            component: <Cargos />,
+            visible: isAdmin // Solo Admin
+        },
+        {
+            key: 'roles',
+            title: 'Roles (Seguridad)',
+            component: <Roles />,
+            visible: isAdmin
+        },
+        {
+            key: 'userRoles',
+            title: 'Asignación de Roles',
+            component: <UserRoles />,
+            visible: isAdmin
+        },
+        {
+            key: 'adelantos',
+            title: 'Solicitudes (Adelantos)',
+            component: <Adelantos />,
+            visible: true
+        }
+    ];
 
     return (
         <div className="container-fluid p-4 animate-fade-in">
@@ -24,25 +59,15 @@ const EmployeeManagement = () => {
                 onSelect={(k) => setKey(k || 'empleados')}
                 className="mb-3"
             >
-                <Tab eventKey="empleados" title="Lista de Empleados">
-                    <Empleados />
-                </Tab>
-                
-                {isAdmin && (
-                    <Tab eventKey="cargos" title="Cargos (Puestos)">
-                        <Cargos />
-                    </Tab>
-                )}
-
-                {isAdmin && (
-                    <Tab eventKey="roles" title="Roles (Seguridad)">
-                        <Roles />
-                    </Tab>
-                )}
-
-                <Tab eventKey="adelantos" title="Solicitudes (Adelantos)">
-                    <Adelantos />
-                </Tab>
+                {/* Renderizamos dinámicamente filtrando los visibles */}
+                {tabsConfig
+                    .filter(tab => tab.visible)
+                    .map(tab => (
+                        <Tab eventKey={tab.key} title={tab.title} key={tab.key}>
+                            {tab.component}
+                        </Tab>
+                    ))
+                }
             </Tabs>
         </div>
     );

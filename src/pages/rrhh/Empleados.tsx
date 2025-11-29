@@ -67,7 +67,7 @@ const Empleados = () => {
     };
 
     return (
-        <div className="container mt-4">
+        <div className="animate-fade-in">
             <div className="d-flex justify-content-end mb-4">
                 <Button variant="primary" onClick={handleCreate}>
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16" className="me-2">
@@ -81,7 +81,7 @@ const Empleados = () => {
 
             {loading ? <div className="text-center py-5"><Spinner animation="border" /></div> : (
                 <div className="card shadow-sm">
-                    <Table hover className="mb-0 align-middle">
+                    <Table hover responsive className="mb-0 align-middle table-nowrap">
                         <thead className="table-light">
                             <tr>
                                 <th>Nombre Completo</th>

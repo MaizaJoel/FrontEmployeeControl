@@ -76,7 +76,7 @@ const Adelantos = () => {
     };
 
     return (
-        <div className="container mt-4">
+        <div className="animate-fade-in">
             <div className="d-flex justify-content-between align-items-center mb-4">
                 <h2>Adelantos de Sueldo</h2>
                 <Button variant="primary" onClick={handleCreate}>+ Nueva Solicitud</Button>
@@ -84,7 +84,7 @@ const Adelantos = () => {
 
             {loading ? <div className="text-center py-5"><Spinner animation="border" /></div> : (
                 <div className="card shadow-sm">
-                    <Table hover className="mb-0 align-middle">
+                    <Table hover responsive className="mb-0 align-middle table-nowrap">
                         <thead className="table-light">
                             <tr>
                                 <th>Fecha</th>
