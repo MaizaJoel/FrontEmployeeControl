@@ -3,6 +3,7 @@ import { Table, Spinner, Badge, Card, Alert, Button, Form, Row, Col, Modal } fro
 import { fichajeService, FichajeLog } from '../../services/fichajeService';
 import { empleadoService } from '../../services/empleadoService';
 import { Empleado } from '../../types';
+import JornadaModal from '../../components/fichajes/FichajesJornadaModal'; // 👈 Importación correcta por default
 
 const Fichajes = () => {
     const [fichajes, setFichajes] = useState<FichajeLog[]>([]);
@@ -15,14 +16,16 @@ const Fichajes = () => {
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    const [showModal, setShowModal] = useState(false);
 
-    // Formulario Modal
+    // Modals
+    const [showJornadaModal, setShowJornadaModal] = useState(false);
+    const [showEditModal, setShowEditModal] = useState(false);
+
+    // Edición Individual (Para corregir UN fichaje específico)
     const [editingFichaje, setEditingFichaje] = useState<FichajeLog | null>(null);
     const [formFecha, setFormFecha] = useState('');
     const [formHora, setFormHora] = useState('');
     const [formTipo, setFormTipo] = useState('ENTRADA');
-    const [formIdEmpleado, setFormIdEmpleado] = useState(0);
 
     useEffect(() => {
         loadMaestros();
@@ -53,46 +56,39 @@ const Fichajes = () => {
         }
     };
 
-    // --- Acciones del Modal ---
-    const handleOpenCreate = () => {
-        setEditingFichaje(null);
-        setFormIdEmpleado(filtroEmpleado || (empleados[0]?.idEmpleado || 0));
-        const now = new Date();
-        setFormFecha(now.toLocaleDateString('en-CA')); // YYYY-MM-DD
-        setFormHora(now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })); // HH:mm
-        setFormTipo('ENTRADA');
-        setShowModal(true);
+    // --- Handlers para Jornada Completa ---
+    const handleOpenJornada = () => {
+        setShowJornadaModal(true);
     };
 
+    const handleJornadaSaved = () => {
+        loadData(); // Recargar tabla tras guardar jornada
+        setShowJornadaModal(false);
+    };
+
+    // --- Handlers para Edición Individual ---
     const handleOpenEdit = (log: FichajeLog) => {
         setEditingFichaje(log);
-        setFormIdEmpleado(log.idEmpleado);
         const dt = new Date(log.timestampUtc);
         setFormFecha(dt.toLocaleDateString('en-CA'));
         setFormHora(dt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }));
         setFormTipo(log.tipoEvento);
-        setShowModal(true);
+        setShowEditModal(true);
     };
 
-    const handleSave = async () => {
+    const handleSaveEdit = async () => {
+        if (!editingFichaje) return;
         try {
-            // Construir fecha local ISO
             const fechaHoraLocal = new Date(`${formFecha}T${formHora}:00`).toISOString();
-            const payload = {
-                idEmpleado: formIdEmpleado,
+            await fichajeService.update(editingFichaje.idFichaje, {
+                idEmpleado: editingFichaje.idEmpleado,
                 fechaHoraLocal: fechaHoraLocal,
                 tipoEvento: formTipo
-            };
-
-            if (editingFichaje) {
-                await fichajeService.update(editingFichaje.idFichaje, payload);
-            } else {
-                await fichajeService.createManual(payload);
-            }
-            setShowModal(false);
+            });
+            setShowEditModal(false);
             loadData();
         } catch (err) {
-            alert('Error al guardar.');
+            alert('Error al actualizar.');
         }
     };
 
@@ -112,7 +108,9 @@ const Fichajes = () => {
         <div className="container mt-4">
             <div className="d-flex justify-content-between align-items-center mb-4">
                 <h2>Historial de Asistencia</h2>
-                <Button variant="primary" onClick={handleOpenCreate}>+ Fichaje Manual</Button>
+                <Button variant="primary" onClick={handleOpenJornada}>
+                    + Registrar Jornada
+                </Button>
             </div>
 
             {/* FILTROS */}
@@ -180,52 +178,34 @@ const Fichajes = () => {
                 </Card>
             )}
 
-            {/* MODAL */}
-            <Modal show={showModal} onHide={() => setShowModal(false)}>
-                <Modal.Header closeButton>
-                    <Modal.Title>{editingFichaje ? 'Editar Fichaje' : 'Fichaje Manual'}</Modal.Title>
-                </Modal.Header>
+            {/* MODAL PARA CREAR JORNADA COMPLETA */}
+            <JornadaModal
+                show={showJornadaModal}
+                handleClose={() => setShowJornadaModal(false)}
+                handleSave={handleJornadaSaved}
+                empleados={empleados}
+                initialDate={fechaInicio}
+                initialEmployeeId={filtroEmpleado}
+            />
+
+            {/* MODAL PARA EDITAR UN SOLO FICHAJE (Corrección Rápida) */}
+            <Modal show={showEditModal} onHide={() => setShowEditModal(false)}>
+                <Modal.Header closeButton><Modal.Title>Corregir Hora</Modal.Title></Modal.Header>
                 <Modal.Body>
-                    <Form>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Empleado</Form.Label>
-                            <Form.Select
-                                value={formIdEmpleado}
-                                onChange={e => setFormIdEmpleado(Number(e.target.value))}
-                                disabled={!!editingFichaje}
-                            >
-                                <option value={0}>Seleccione...</option>
-                                {empleados.map(e => <option key={e.idEmpleado} value={e.idEmpleado}>{e.apellido} {e.nombre}</option>)}
-                            </Form.Select>
-                        </Form.Group>
-                        <Row>
-                            <Col>
-                                <Form.Group className="mb-3">
-                                    <Form.Label>Fecha</Form.Label>
-                                    <Form.Control type="date" value={formFecha} onChange={e => setFormFecha(e.target.value)} />
-                                </Form.Group>
-                            </Col>
-                            <Col>
-                                <Form.Group className="mb-3">
-                                    <Form.Label>Hora</Form.Label>
-                                    <Form.Control type="time" value={formHora} onChange={e => setFormHora(e.target.value)} />
-                                </Form.Group>
-                            </Col>
-                        </Row>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Tipo Evento</Form.Label>
-                            <Form.Select value={formTipo} onChange={e => setFormTipo(e.target.value)}>
-                                <option value="ENTRADA">ENTRADA</option>
-                                <option value="INICIO_ALMUERZO">INICIO_ALMUERZO</option>
-                                <option value="FIN_ALMUERZO">FIN_ALMUERZO</option>
-                                <option value="SALIDA">SALIDA</option>
-                            </Form.Select>
-                        </Form.Group>
-                    </Form>
+                    <Row>
+                        <Col><Form.Control type="date" value={formFecha} onChange={e => setFormFecha(e.target.value)} /></Col>
+                        <Col><Form.Control type="time" value={formHora} onChange={e => setFormHora(e.target.value)} /></Col>
+                    </Row>
+                    <Form.Select className="mt-3" value={formTipo} onChange={e => setFormTipo(e.target.value)}>
+                        <option value="ENTRADA">ENTRADA</option>
+                        <option value="INICIO_ALMUERZO">INICIO_ALMUERZO</option>
+                        <option value="FIN_ALMUERZO">FIN_ALMUERZO</option>
+                        <option value="SALIDA">SALIDA</option>
+                    </Form.Select>
                 </Modal.Body>
                 <Modal.Footer>
-                    <Button variant="secondary" onClick={() => setShowModal(false)}>Cancelar</Button>
-                    <Button variant="primary" onClick={handleSave}>Guardar</Button>
+                    <Button variant="secondary" onClick={() => setShowEditModal(false)}>Cancelar</Button>
+                    <Button variant="primary" onClick={handleSaveEdit}>Guardar Cambios</Button>
                 </Modal.Footer>
             </Modal>
         </div>

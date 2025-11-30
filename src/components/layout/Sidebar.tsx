@@ -62,9 +62,9 @@ const Sidebar = ({ onClose, isCollapsed = false }: SidebarProps) => {
                         {!isCollapsed && <span className="ms-3">Dashboard</span>}
                     </NavLink>
 
-                    <NavLink to="/adelantos" className={({ isActive }) => getNavLinkClass(isActive)} onClick={onClose} title="Mis Adelantos">
+                    <NavLink to="/fichajes" className={({ isActive }) => getNavLinkClass(isActive)} onClick={onClose} title="Registros Fichajes">
                         <i className="bi bi-cash-coin fs-5"></i>
-                        {!isCollapsed && <span className="ms-3">Mis Adelantos</span>}
+                        {!isCollapsed && <span className="ms-3">Registros Fichajes</span>}
                     </NavLink>
 
                     {isAdmin && (

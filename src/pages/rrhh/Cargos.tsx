@@ -122,16 +122,18 @@ const Cargos = () => {
                                             variant="outline-primary"
                                             size="sm"
                                             className="me-2"
+                                            title="Editar Cargo"
                                             onClick={() => handleOpenEdit(cargo)}
                                         >
-                                            Editar
+                                            ✏️
                                         </Button>
                                         <Button
                                             variant="outline-danger"
                                             size="sm"
+                                            title="Eliminar Cargo"
                                             onClick={() => handleDelete(cargo.idCargo)}
                                         >
-                                            Eliminar
+                                            🗑️
                                         </Button>
                                     </td>
                                 </tr>

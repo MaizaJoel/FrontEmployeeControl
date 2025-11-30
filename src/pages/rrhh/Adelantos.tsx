@@ -105,14 +105,13 @@ const Adelantos = () => {
                                     <td><small className="text-muted">{item.descripcion}</small></td>
 
                                     <td className="text-end">
-                                        {/* 👇 LÓGICA DE BOTONES MEJORADA */}
 
                                         {/* Solo permitimos acciones si NO está Pagado */}
                                         {item.estado !== 'Pagado' && (
                                             <>
                                                 {/* Aprobar: Solo si no está aprobado aún */}
                                                 {item.estado !== 'Aprobado' && (
-                                                    <Button variant="outline-success" size="sm" className="me-1" title="Aprobar"
+                                                    <Button variant="outline-success" size="sm" className="me-1" title="Aprobar Adelanto"
                                                         onClick={() => handleCambiarEstado(item.idAdelanto, 'Aprobado')}>✓</Button>
                                                 )}
 
@@ -123,15 +122,15 @@ const Adelantos = () => {
                                                 )}
 
                                                 {/* Editar: Siempre visible (corregir montos) */}
-                                                <Button variant="outline-primary" size="sm" className="me-1"
-                                                    onClick={() => handleEdit(item)}>Editar</Button>
+                                                <Button variant="outline-primary" size="sm" className="me-1" title="Editar Adelanto"
+                                                    onClick={() => handleEdit(item)}>✏️</Button>
 
                                                 {/* AHORA: Mostramos el botón si es Solicitado O Rechazado */}
                                                 {(item.estado === 'Solicitado' || item.estado === 'Rechazado') && (
                                                     <Button
                                                         variant="outline-danger" size="sm"
                                                         onClick={() => handleDelete(item.idAdelanto)}
-                                                        title="Eliminar registro"
+                                                        title="Eliminar adelanto"
                                                     >
                                                         🗑️
                                                     </Button>
