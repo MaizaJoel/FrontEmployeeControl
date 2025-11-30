@@ -288,7 +288,7 @@ const EmpleadoModal = ({ show, handleClose, handleSave, empleadoToEdit }: Emplea
                             <i className="bi bi-info-circle me-2"></i>
                             Al crear el empleado, se generará automáticamente su usuario de sistema.
                             <br />
-                            <strong>Contraseña temporal:</strong> (Su número de cédula) + *Aa
+                            <strong>Contraseña temporal:</strong> (Su número de cédula) + *Freesias
                         </div>
                     )}
                 </Modal.Footer>

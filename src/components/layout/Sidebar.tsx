@@ -1,5 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useState } from 'react';
+import ChangePasswordModal from '../auth/ChangePasswordModal';
 
 interface SidebarProps {
     onClose?: () => void;
@@ -9,6 +11,7 @@ interface SidebarProps {
 const Sidebar = ({ onClose, isCollapsed = false }: SidebarProps) => {
     const { user, logout } = useAuth();
     const isAdmin = user?.role === 'Admin';
+    const [showPasswordModal, setShowPasswordModal] = useState(false);
 
     const handleLogout = () => {
         if (window.confirm('¿Cerrar sesión?')) {
@@ -126,7 +129,26 @@ const Sidebar = ({ onClose, isCollapsed = false }: SidebarProps) => {
                         </button>
                     </div>
                 )}
+
+                <button
+                    className="btn btn-outline-light w-100 d-flex align-items-center justify-content-center gap-2 mb-2 btn-sm"
+                    onClick={() => setShowPasswordModal(true)}
+                >
+                    <i className="bi bi-key"></i> Cambiar Clave
+                </button>
+
+                <button
+                    className="btn btn-danger w-100 d-flex align-items-center justify-content-center gap-2 btn-sm"
+                    onClick={handleLogout}
+                >
+                    <i className="bi bi-box-arrow-right"></i> Cerrar Sesión
+                </button>
+
             </div>
+            <ChangePasswordModal
+                show={showPasswordModal}
+                handleClose={() => setShowPasswordModal(false)}
+            />
         </div>
     );
 };
