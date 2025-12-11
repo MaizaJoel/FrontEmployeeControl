@@ -15,6 +15,17 @@ export interface UserWithRoles {
 
 export interface CreateRole {
     name: string;
+    template?: string;
+}
+
+export interface PermissionCheckbox {
+    value: string;
+    isSelected: boolean;
+}
+export interface RolePermissions {
+    roleId: string;
+    roleName: string;
+    permissions: PermissionCheckbox[];
 }
 
 export const roleService = {
@@ -33,7 +44,6 @@ export const roleService = {
         return response.data;
     },
 
-    // --- NUEVOS MÉTODOS ---
     getUsers: async () => {
         const response = await axiosClient.get<UserWithRoles[]>('/Roles/Users');
         return response.data;
@@ -46,6 +56,16 @@ export const roleService = {
 
     removeRole: async (userId: string, roleName: string) => {
         const response = await axiosClient.post('/Roles/Remove', { userId, roleName });
+        return response.data;
+    },
+
+    getPermissions: async (roleId: string) => {
+        const response = await axiosClient.get<RolePermissions>(`/Roles/${roleId}/Permissions`);
+        return response.data;
+    },
+
+    updatePermissions: async (roleId: string, selectedPermissions: string[]) => {
+        const response = await axiosClient.put(`/Roles/${roleId}/Permissions`, { selectedPermissions });
         return response.data;
     }
 };

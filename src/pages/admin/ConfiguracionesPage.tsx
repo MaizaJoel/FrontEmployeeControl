@@ -10,7 +10,7 @@ const ConfiguracionesPage = () => {
                 <i className="bi bi-gear me-2"></i>
                 Configuraciones del Sistema
             </h2>
-            
+
             <Tabs defaultActiveKey="general" id="config-tabs" className="mb-3">
                 <Tab eventKey="general" title="Variables Generales">
                     <ConfiguracionesTab />
@@ -64,7 +64,7 @@ const ConfiguracionesTab = () => {
     return (
         <div>
             <div className="d-flex justify-content-end mb-3">
-                <Button variant="primary" size="sm" onClick={() => { setEditingId(null); setFormData({clave:'', valor:'', descripcion:''}); setShowModal(true); }}>
+                <Button variant="primary" size="sm" onClick={() => { setEditingId(null); setFormData({ clave: '', valor: '', descripcion: '' }); setShowModal(true); }}>
                     <i className="bi bi-plus-lg me-2"></i> Nueva Variable
                 </Button>
             </div>
@@ -78,8 +78,8 @@ const ConfiguracionesTab = () => {
                                 <td>{c.valor}</td>
                                 <td className="text-muted">{c.descripcion}</td>
                                 <td>
-                                    <Button variant="link" size="sm" onClick={() => handleEdit(c)}><i className="bi bi-pencil"></i></Button>
-                                    <Button variant="link" size="sm" className="text-danger" onClick={() => handleDelete(c.idConfiguracion)}><i className="bi bi-trash"></i></Button>
+                                    <Button variant="outline-primary" size="sm" className="me-2" onClick={() => handleEdit(c)} title="Editar configuración">✏️</Button>
+                                    <Button variant="outline-danger" size="sm" onClick={() => handleDelete(c.idConfiguracion)} title="Eliminar configuración">🗑️</Button>
                                 </td>
                             </tr>
                         ))}
@@ -90,9 +90,9 @@ const ConfiguracionesTab = () => {
                 <Form onSubmit={handleSave}>
                     <Modal.Header closeButton><Modal.Title>{editingId ? 'Editar' : 'Nueva'} Configuración</Modal.Title></Modal.Header>
                     <Modal.Body>
-                        <Form.Group className="mb-3"><Form.Label>Clave</Form.Label><Form.Control value={formData.clave} onChange={e => setFormData({...formData, clave: e.target.value})} required /></Form.Group>
-                        <Form.Group className="mb-3"><Form.Label>Valor</Form.Label><Form.Control value={formData.valor} onChange={e => setFormData({...formData, valor: e.target.value})} required /></Form.Group>
-                        <Form.Group className="mb-3"><Form.Label>Descripción</Form.Label><Form.Control value={formData.descripcion} onChange={e => setFormData({...formData, descripcion: e.target.value})} /></Form.Group>
+                        <Form.Group className="mb-3"><Form.Label>Clave</Form.Label><Form.Control value={formData.clave} onChange={e => setFormData({ ...formData, clave: e.target.value })} required /></Form.Group>
+                        <Form.Group className="mb-3"><Form.Label>Valor</Form.Label><Form.Control value={formData.valor} onChange={e => setFormData({ ...formData, valor: e.target.value })} required /></Form.Group>
+                        <Form.Group className="mb-3"><Form.Label>Descripción</Form.Label><Form.Control value={formData.descripcion} onChange={e => setFormData({ ...formData, descripcion: e.target.value })} /></Form.Group>
                     </Modal.Body>
                     <Modal.Footer><Button variant="secondary" onClick={() => setShowModal(false)}>Cancelar</Button><Button type="submit" variant="primary">Guardar</Button></Modal.Footer>
                 </Form>
@@ -142,7 +142,7 @@ const FeriadosTab = () => {
     return (
         <div>
             <div className="d-flex justify-content-end mb-3">
-                <Button variant="primary" size="sm" onClick={() => { setEditingId(null); setFormData({fecha:'', descripcion:''}); setShowModal(true); }}>
+                <Button variant="primary" size="sm" onClick={() => { setEditingId(null); setFormData({ fecha: '', descripcion: '' }); setShowModal(true); }}>
                     <i className="bi bi-plus-lg me-2"></i> Nuevo Feriado
                 </Button>
             </div>
@@ -155,8 +155,8 @@ const FeriadosTab = () => {
                                 <td className="fw-bold">{new Date(f.fecha).toLocaleDateString()}</td>
                                 <td>{f.descripcion}</td>
                                 <td>
-                                    <Button variant="link" size="sm" onClick={() => handleEdit(f)}><i className="bi bi-pencil"></i></Button>
-                                    <Button variant="link" size="sm" className="text-danger" onClick={() => handleDelete(f.idFeriado)}><i className="bi bi-trash"></i></Button>
+                                    <Button variant="outline-primary" size="sm" className="me-2" onClick={() => handleEdit(f)} title="Editar feriado">✏️</Button>
+                                    <Button variant="outline-danger" size="sm" onClick={() => handleDelete(f.idFeriado)} title="Eliminar feriado">🗑️</Button>
                                 </td>
                             </tr>
                         ))}
@@ -167,8 +167,8 @@ const FeriadosTab = () => {
                 <Form onSubmit={handleSave}>
                     <Modal.Header closeButton><Modal.Title>{editingId ? 'Editar' : 'Nuevo'} Feriado</Modal.Title></Modal.Header>
                     <Modal.Body>
-                        <Form.Group className="mb-3"><Form.Label>Fecha</Form.Label><Form.Control type="date" value={formData.fecha} onChange={e => setFormData({...formData, fecha: e.target.value})} required /></Form.Group>
-                        <Form.Group className="mb-3"><Form.Label>Descripción</Form.Label><Form.Control value={formData.descripcion} onChange={e => setFormData({...formData, descripcion: e.target.value})} required /></Form.Group>
+                        <Form.Group className="mb-3"><Form.Label>Fecha</Form.Label><Form.Control type="date" value={formData.fecha} onChange={e => setFormData({ ...formData, fecha: e.target.value })} required /></Form.Group>
+                        <Form.Group className="mb-3"><Form.Label>Descripción</Form.Label><Form.Control value={formData.descripcion} onChange={e => setFormData({ ...formData, descripcion: e.target.value })} required /></Form.Group>
                     </Modal.Body>
                     <Modal.Footer><Button variant="secondary" onClick={() => setShowModal(false)}>Cancelar</Button><Button type="submit" variant="primary">Guardar</Button></Modal.Footer>
                 </Form>

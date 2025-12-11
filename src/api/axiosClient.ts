@@ -1,7 +1,14 @@
 import axios from 'axios';
 
-// ⚠️ Confirm this matches your Backend URL
-const BASE_URL = 'https://localhost:7114/api';
+// ✅ Use environment variables for security and flexibility
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+// Validate that the API URL is configured
+if (!BASE_URL) {
+    throw new Error(
+        'VITE_API_BASE_URL is not defined. Please check your .env file.'
+    );
+}
 
 const axiosClient = axios.create({
     baseURL: BASE_URL,
@@ -22,18 +29,17 @@ axiosClient.interceptors.request.use(
     (error) => Promise.reject(error)
 );
 
-// Response Interceptor: Handles 401 errors
 axiosClient.interceptors.response.use(
     (response) => response,
     (error) => {
-        // If the server says "401 Unauthorized" (Token expired/invalid)
-        if (error.response && (error.response.status === 401 || error.response.status === 403)) {
-            // 1. Remove the bad token
-            localStorage.removeItem('token');
 
-            // 2. Force redirect to Login (optional but recommended)
-            // Note: Using window.location is a "hard" redirect, effective for security
+        if (error.response && error.response.status === 401) {
+            localStorage.removeItem('token');
             window.location.href = '/';
+        }
+
+        if (error.response && error.response.status === 403) {
+            alert("No tiene permisos para realizar esta acción.");
         }
         return Promise.reject(error);
     }

@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Modal, Button, Form, Alert } from 'react-bootstrap';
 import { Adelanto, CreateAdelanto } from '../../services/adelantoService';
-import { useAuth } from '../../context/AuthContext';
-import { empleadoService, Empleado } from '../../services/empleadoService';
+import { empleadoService } from '../../services/empleadoService';
+import { Empleado } from '../../types';
 
 interface Props {
     show: boolean;
@@ -12,9 +12,10 @@ interface Props {
 }
 
 const AdelantoModal = ({ show, handleClose, handleSave, adelantoToEdit }: Props) => {
-    const { user } = useAuth();
-    const isAdmin = user?.role === 'Admin';
-    
+    // Ya no necesitamos verificar permisos aquí adentro si la lógica es estándar para Admin/Asistente
+    // Pero si queremos ser defensivos, podemos mantenerlo. 
+    // Simplificaremos asumiendo que el botón que abre este modal ya validó permisos.
+
     const [monto, setMonto] = useState(0);
     const [descripcion, setDescripcion] = useState('');
     const [idEmpleado, setIdEmpleado] = useState<number | null>(null);
@@ -22,10 +23,10 @@ const AdelantoModal = ({ show, handleClose, handleSave, adelantoToEdit }: Props)
     const [error, setError] = useState('');
 
     useEffect(() => {
-        if (show && isAdmin) {
+        if (show) {
             loadEmpleados();
         }
-    }, [show, isAdmin]);
+    }, [show]);
 
     useEffect(() => {
         if (adelantoToEdit) {
@@ -51,19 +52,15 @@ const AdelantoModal = ({ show, handleClose, handleSave, adelantoToEdit }: Props)
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        
-        // Si es admin y está creando, DEBE seleccionar empleado
-        if (isAdmin && !adelantoToEdit && !idEmpleado) {
+
+        // Validación: Deben seleccionar un empleado
+        if (!idEmpleado) {
             setError('Debe seleccionar un empleado.');
             return;
         }
 
-        // Si es empleado normal, el ID se ignora en el backend (usa el token), 
-        // pero podemos mandarlo si queremos. El backend lo valida.
-        // Si es Admin, el ID es obligatorio.
-        
         handleSave({
-            idEmpleado: idEmpleado || 0, // 0 si no se seleccionó (backend fallará si es admin)
+            idEmpleado: idEmpleado,
             monto,
             descripcion
         });
@@ -77,43 +74,41 @@ const AdelantoModal = ({ show, handleClose, handleSave, adelantoToEdit }: Props)
                 </Modal.Header>
                 <Modal.Body>
                     {error && <Alert variant="danger">{error}</Alert>}
-                    
-                    {isAdmin && !adelantoToEdit && (
-                        <Form.Group className="mb-3">
-                            <Form.Label>Empleado</Form.Label>
-                            <Form.Select 
-                                value={idEmpleado || ''} 
-                                onChange={(e) => setIdEmpleado(Number(e.target.value))}
-                                required
-                            >
-                                <option value="">Seleccione un empleado...</option>
-                                {empleados.map(emp => (
-                                    <option key={emp.idEmpleado} value={emp.idEmpleado}>
-                                        {emp.nombre} {emp.apellido}
-                                    </option>
-                                ))}
-                            </Form.Select>
-                        </Form.Group>
-                    )}
+
+                    <Form.Group className="mb-3">
+                        <Form.Label>Empleado</Form.Label>
+                        <Form.Select
+                            value={idEmpleado || ''}
+                            onChange={(e) => setIdEmpleado(Number(e.target.value))}
+                            required
+                        >
+                            <option value="">Seleccione un empleado...</option>
+                            {empleados.map(emp => (
+                                <option key={emp.idEmpleado} value={emp.idEmpleado}>
+                                    {emp.nombre} {emp.apellido}
+                                </option>
+                            ))}
+                        </Form.Select>
+                    </Form.Group>
 
                     <Form.Group className="mb-3">
                         <Form.Label>Monto</Form.Label>
-                        <Form.Control 
-                            type="number" 
-                            step="0.01" 
-                            value={monto} 
-                            onChange={(e) => setMonto(parseFloat(e.target.value))} 
-                            required 
+                        <Form.Control
+                            type="number"
+                            step="0.01"
+                            value={monto}
+                            onChange={(e) => setMonto(parseFloat(e.target.value))}
+                            required
                         />
                     </Form.Group>
                     <Form.Group className="mb-3">
                         <Form.Label>Descripción</Form.Label>
-                        <Form.Control 
-                            as="textarea" 
-                            rows={3} 
-                            value={descripcion} 
-                            onChange={(e) => setDescripcion(e.target.value)} 
-                            required 
+                        <Form.Control
+                            as="textarea"
+                            rows={3}
+                            value={descripcion}
+                            onChange={(e) => setDescripcion(e.target.value)}
+                            required
                         />
                     </Form.Group>
                 </Modal.Body>

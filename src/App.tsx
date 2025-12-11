@@ -24,8 +24,9 @@ const RutaPublica = () => {
 };
 
 const RutaAdmin = () => {
-    const { user } = useAuth();
-    if (user?.role !== 'Admin') {
+    const { hasPermission } = useAuth();
+    // Allow if has Settings.View OR Employees.View (covers Asistente case)
+    if (!hasPermission('Permissions.Settings.View') && !hasPermission('Permissions.Employees.View')) {
         return <Navigate to="/dashboard" replace />;
     }
     return <Outlet />;

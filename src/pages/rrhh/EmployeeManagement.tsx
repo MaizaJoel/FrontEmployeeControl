@@ -9,8 +9,7 @@ import { useAuth } from '../../context/AuthContext';
 
 const EmployeeManagement = () => {
     const [key, setKey] = useState('empleados');
-    const { user } = useAuth();
-    const isAdmin = user?.role === 'Admin';
+    const { hasPermission } = useAuth();
 
     // Definimos la configuración de las pestañas
     const tabsConfig = [
@@ -18,31 +17,31 @@ const EmployeeManagement = () => {
             key: 'empleados',
             title: 'Lista de Empleados',
             component: <Empleados />,
-            visible: true // Siempre visible
+            visible: hasPermission('Permissions.Employees.View')
         },
         {
             key: 'cargos',
             title: 'Cargos (Puestos)',
             component: <Cargos />,
-            visible: isAdmin // Solo Admin
+            visible: hasPermission('Permissions.Positions.View')
         },
         {
             key: 'roles',
             title: 'Roles (Seguridad)',
             component: <Roles />,
-            visible: isAdmin
+            visible: hasPermission('Permissions.Roles.Manage')
         },
         {
             key: 'userRoles',
             title: 'Asignación de Roles',
             component: <UserRoles />,
-            visible: isAdmin
+            visible: hasPermission('Permissions.Roles.Manage') // Or maybe a specific permission for assigning roles?
         },
         {
             key: 'adelantos',
             title: 'Solicitudes (Adelantos)',
             component: <Adelantos />,
-            visible: true
+            visible: true // All authenticated users can see their own advances
         }
     ];
 

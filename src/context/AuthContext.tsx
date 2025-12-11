@@ -1,10 +1,26 @@
 import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { jwtDecode } from "jwt-decode";
 
+// Define the permissions mapping here for fallback (matches backend AppPermissions.cs)
+const DEFAULT_ROLE_PERMISSIONS: Record<string, string[]> = {
+    Admin: ['ALL'], // Special keyword for full access
+    Asistente: [
+        'Permissions.Employees.View',
+        'Permissions.Employees.Create',
+        'Permissions.Employees.Edit',
+        'Permissions.Positions.View',
+        'Permissions.Advances.ViewAll',
+        'Permissions.TimeClock.ViewHistory',
+        'Permissions.Reports.View'
+    ],
+    Employee: []
+};
+
 interface User {
     username: string;
     email: string;
     role: string;
+    permissions: string[];
     token: string;
 }
 
@@ -13,6 +29,7 @@ interface AuthContextType {
     login: (token: string) => void;
     logout: () => void;
     isAuthenticated: boolean;
+    hasPermission: (permission: string) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -33,12 +50,40 @@ interface DecodedToken {
     unique_name?: string;
     email?: string;
     role?: string | string[];
+    Permission?: string | string[]; // Backend sends "Permission"
     exp: number;
     [key: string]: any;
 }
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
     const [user, setUser] = useState<User | null>(null);
+
+    // Helper to normalize permissions (from token or fallback)
+    const getPermissions = (decoded: DecodedToken, role: string): string[] => {
+        let permissions: string[] = [];
+
+        // 1. Try to get from Token
+        if (decoded.Permission) {
+            if (Array.isArray(decoded.Permission)) {
+                permissions = decoded.Permission;
+            } else {
+                permissions = [decoded.Permission];
+            }
+        }
+
+        // 2. If no permissions in token (or empty), use fallback based on Role
+        if (permissions.length === 0 && role) {
+            // Check exact role match
+            const roleKey = Object.keys(DEFAULT_ROLE_PERMISSIONS).find(k => k.toLowerCase() === role.toLowerCase());
+            if (roleKey) {
+                permissions = DEFAULT_ROLE_PERMISSIONS[roleKey];
+            } else if (role === 'Admin') {
+                permissions = ['ALL'];
+            }
+        }
+
+        return permissions;
+    };
 
     useEffect(() => {
         const storedToken = localStorage.getItem('token');
@@ -47,17 +92,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
                 const decoded = jwtDecode<DecodedToken>(storedToken);
                 // Check expiration
                 if (decoded.exp * 1000 > Date.now()) {
-                     // Handle role being string or array
-                     // The claim name might be different depending on backend mapping, 
-                     // but usually 'role' or the full URI. jwt-decode often handles standard ones.
-                     // We'll check 'role' and 'http://schemas.microsoft.com/ws/2008/06/identity/claims/role'
-                     const rawRole = decoded.role || decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
-                     const userRole = Array.isArray(rawRole) ? rawRole[0] : rawRole || 'Employee';
+                    // Handle role being string or array
+                    const rawRole = decoded.role || decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
+                    const userRole = Array.isArray(rawRole) ? rawRole[0] : rawRole || 'Employee';
 
-                     setUser({
+                    const perms = getPermissions(decoded, userRole);
+
+                    setUser({
                         username: decoded.unique_name || decoded.sub || 'User',
                         email: decoded.email || '',
                         role: userRole,
+                        permissions: perms,
                         token: storedToken
                     });
                 } else {
@@ -76,11 +121,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             const decoded = jwtDecode<DecodedToken>(token);
             const rawRole = decoded.role || decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
             const userRole = Array.isArray(rawRole) ? rawRole[0] : rawRole || 'Employee';
-            
+
+            const perms = getPermissions(decoded, userRole);
+
             setUser({
                 username: decoded.unique_name || decoded.sub || 'User',
                 email: decoded.email || '',
                 role: userRole,
+                permissions: perms,
                 token: token
             });
         } catch (error) {
@@ -93,11 +141,18 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         setUser(null);
     };
 
+    const hasPermission = (permission: string): boolean => {
+        if (!user) return false;
+        if (user.role === 'Admin' || user.permissions.includes('ALL')) return true;
+        return user.permissions.includes(permission);
+    };
+
     const value = {
         user,
         login,
         logout,
-        isAuthenticated: !!user
+        isAuthenticated: !!user,
+        hasPermission
     };
 
     return (

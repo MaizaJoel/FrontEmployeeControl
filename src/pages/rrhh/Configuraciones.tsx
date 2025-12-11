@@ -110,19 +110,16 @@ const Configuraciones = () => {
                                     <td className="text-muted">{config.descripcion || '-'}</td>
                                     <td className="text-end">
                                         <Button
-                                            variant="link"
-                                            className="text-primary p-0 me-3"
+                                            variant="outline-primary"
+                                            size="sm"
+                                            className="me-2"
                                             onClick={() => handleOpenEdit(config)}
-                                        >
-                                            Editar
-                                        </Button>
+                                        >✏️</Button>
                                         <Button
-                                            variant="link"
-                                            className="text-danger p-0"
+                                            variant="outline-danger"
+                                            size="sm"
                                             onClick={() => handleDelete(config.idConfiguracion)}
-                                        >
-                                            Eliminar
-                                        </Button>
+                                        >🗑️</Button>
                                     </td>
                                 </tr>
                             ))}

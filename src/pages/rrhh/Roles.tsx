@@ -1,13 +1,20 @@
 import { useEffect, useState } from 'react';
-import { Button, Table, Modal, Form, Alert, Spinner } from 'react-bootstrap';
+import { Button, Table, Alert, Spinner } from 'react-bootstrap';
 import { roleService, Role } from '../../services/roleService';
+import RoleModal from '../../components/roles/RoleModal';
+import PermissionsModal from '../../components/roles/PermissionsModal';
 
 const Roles = () => {
     const [roles, setRoles] = useState<Role[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    const [showModal, setShowModal] = useState(false);
-    const [newRoleName, setNewRoleName] = useState('');
+
+    // Estado: Crear Rol
+    const [showCreateModal, setShowCreateModal] = useState(false);
+
+    // Estado: Gestionar Permisos
+    const [showPermisosModal, setShowPermisosModal] = useState(false);
+    const [selectedRole, setSelectedRole] = useState<{ id: string, name: string } | null>(null);
 
     useEffect(() => { loadRoles(); }, []);
 
@@ -16,24 +23,21 @@ const Roles = () => {
         try {
             const data = await roleService.getAll();
             setRoles(data);
+            setError('');
         } catch (err) {
-            console.error(err);
             setError('Error al cargar roles.');
         } finally {
             setLoading(false);
         }
     };
 
-    const handleCreate = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleCreate = async (data: { name: string }) => {
         try {
-            await roleService.create({ name: newRoleName });
-            setShowModal(false);
-            setNewRoleName('');
+            await roleService.create(data);
+            setShowCreateModal(false);
             loadRoles();
         } catch (err: any) {
-            console.error(err);
-            alert('Error al crear rol: ' + (err.response?.data || err.message));
+            alert('Error al crear: ' + (err.response?.data || err.message));
         }
     };
 
@@ -48,21 +52,21 @@ const Roles = () => {
             await roleService.delete(id);
             loadRoles();
         } catch (err) {
-            console.error(err);
             alert('Error al eliminar rol.');
         }
     };
 
+    const handleOpenPermisos = (role: Role) => {
+        setSelectedRole({ id: role.id, name: role.name });
+        setShowPermisosModal(true);
+    };
+
     return (
-        <div className="animate-fade-in">
+        <div className="container-fluid p-0 animate-fade-in">
             <div className="d-flex justify-content-between align-items-center mb-4">
-                <h2 className="text-primary fw-bold">
-                    <i className="bi bi-shield-lock me-2"></i>
-                    Roles de Seguridad (Identity)
-                </h2>
-                <Button variant="primary" onClick={() => setShowModal(true)}>
-                    <i className="bi bi-plus-lg me-2"></i>
-                    Nuevo Rol
+                <h5 className="text-muted mb-0">Definición de Roles</h5>
+                <Button variant="primary" size="sm" onClick={() => setShowCreateModal(true)}>
+                    <i className="bi bi-plus-lg me-2"></i> Nuevo Rol
                 </Button>
             </div>
 
@@ -72,7 +76,7 @@ const Roles = () => {
                 <div className="text-center py-5"><Spinner animation="border" /></div>
             ) : (
                 <div className="card shadow-sm border-0">
-                    <Table hover responsive className="mb-0 table-nowrap">
+                    <Table hover responsive className="mb-0 align-middle">
                         <thead className="bg-light">
                             <tr>
                                 <th>ID</th>
@@ -83,12 +87,22 @@ const Roles = () => {
                         <tbody>
                             {roles.map((r) => (
                                 <tr key={r.id}>
-                                    <td><small className="text-muted">{r.id}</small></td>
+                                    <td><small className="text-muted text-truncate d-block" style={{ maxWidth: '150px' }}>{r.id}</small></td>
                                     <td className="fw-bold">{r.name}</td>
                                     <td className="text-end">
+                                        {/* Botón Permisos */}
+                                        <Button variant="link" size="sm" className="me-2"
+                                            onClick={() => handleOpenPermisos(r)}
+                                            title="Configurar Permisos"
+                                        >
+                                            <i className="bi bi-shield-check"></i> Permisos
+                                        </Button>
+
+                                        {/* Botón Eliminar */}
                                         <Button variant="link" className="text-danger p-0"
                                             onClick={() => handleDelete(r.id, r.name)}
                                             disabled={r.name === 'Admin' || r.name === 'Employee'}
+                                            title="Eliminar Rol"
                                         >
                                             <i className="bi bi-trash"></i>
                                         </Button>
@@ -100,29 +114,20 @@ const Roles = () => {
                 </div>
             )}
 
-            <Modal show={showModal} onHide={() => setShowModal(false)}>
-                <Modal.Header closeButton>
-                    <Modal.Title>Nuevo Rol</Modal.Title>
-                </Modal.Header>
-                <Form onSubmit={handleCreate}>
-                    <Modal.Body>
-                        <Form.Group>
-                            <Form.Label>Nombre del Rol</Form.Label>
-                            <Form.Control
-                                type="text"
-                                value={newRoleName}
-                                onChange={(e) => setNewRoleName(e.target.value)}
-                                required
-                                autoFocus
-                            />
-                        </Form.Group>
-                    </Modal.Body>
-                    <Modal.Footer>
-                        <Button variant="secondary" onClick={() => setShowModal(false)}>Cancelar</Button>
-                        <Button variant="primary" type="submit">Guardar</Button>
-                    </Modal.Footer>
-                </Form>
-            </Modal>
+            {/* MODAL DE CREACIÓN */}
+            <RoleModal
+                show={showCreateModal}
+                handleClose={() => setShowCreateModal(false)}
+                handleSave={handleCreate}
+            />
+
+            {/* MODAL DE PERMISOS */}
+            <PermissionsModal
+                show={showPermisosModal}
+                handleClose={() => setShowPermisosModal(false)}
+                roleId={selectedRole?.id || null}
+                roleName={selectedRole?.name || ''}
+            />
         </div>
     );
 };

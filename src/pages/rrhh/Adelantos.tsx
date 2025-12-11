@@ -1,9 +1,13 @@
 import { useEffect, useState } from 'react';
-import { Button, Table, Badge, Spinner, Alert } from 'react-bootstrap';
+import { Button, Table, Badge, Spinner } from 'react-bootstrap';
 import { adelantoService, Adelanto, CreateAdelanto } from '../../services/adelantoService';
 import AdelantoModal from '../../components/adelantos/AdelantoModal';
+import { useAuth } from '../../context/AuthContext';
 
 const Adelantos = () => {
+    const { hasPermission } = useAuth();
+    const canManage = hasPermission('Permissions.Advances.Manage');
+
     const [adelantos, setAdelantos] = useState<Adelanto[]>([]);
     const [loading, setLoading] = useState(false);
 
@@ -79,7 +83,9 @@ const Adelantos = () => {
         <div className="animate-fade-in">
             <div className="d-flex justify-content-between align-items-center mb-4">
                 <h2>Adelantos de Sueldo</h2>
-                <Button variant="primary" onClick={handleCreate}>+ Nueva Solicitud</Button>
+                {canManage && (
+                    <Button variant="primary" onClick={handleCreate}>+ Nueva Solicitud</Button>
+                )}
             </div>
 
             {loading ? <div className="text-center py-5"><Spinner animation="border" /></div> : (
@@ -127,13 +133,9 @@ const Adelantos = () => {
 
                                                 {/* AHORA: Mostramos el botón si es Solicitado O Rechazado */}
                                                 {(item.estado === 'Solicitado' || item.estado === 'Rechazado') && (
-                                                    <Button
-                                                        variant="outline-danger" size="sm"
+                                                    <Button variant="outline-danger" size="sm"
                                                         onClick={() => handleDelete(item.idAdelanto)}
-                                                        title="Eliminar adelanto"
-                                                    >
-                                                        🗑️
-                                                    </Button>
+                                                        title="Eliminar adelanto">🗑️</Button>
                                                 )}
                                             </>
                                         )}

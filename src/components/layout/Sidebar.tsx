@@ -9,8 +9,11 @@ interface SidebarProps {
 }
 
 const Sidebar = ({ onClose, isCollapsed = false }: SidebarProps) => {
-    const { user, logout } = useAuth();
-    const isAdmin = user?.role === 'Admin';
+    const { user, logout, hasPermission } = useAuth();
+    // Show Admin section if has ANY of the sub-permissions
+    const showAdminSection = hasPermission('Permissions.Employees.View') ||
+        hasPermission('Permissions.Reports.View') ||
+        hasPermission('Permissions.Settings.View');
     const [showPasswordModal, setShowPasswordModal] = useState(false);
 
     const handleLogout = () => {
@@ -70,32 +73,41 @@ const Sidebar = ({ onClose, isCollapsed = false }: SidebarProps) => {
                         {!isCollapsed && <span className="ms-3">Registros Fichajes</span>}
                     </NavLink>
 
-                    {isAdmin && (
+                    {showAdminSection && (
                         <>
                             <div className={`my-3 border-top border-secondary mx-3 ${isCollapsed ? 'd-none' : ''}`}></div>
                             <small className={`text-uppercase text-white-50 fw-bold px-3 mb-2 ${isCollapsed ? 'd-none' : 'd-block'}`} style={{ fontSize: '0.7rem' }}>
                                 Administración
                             </small>
 
-                            <NavLink to="/empleados" className={({ isActive }) => getNavLinkClass(isActive)} onClick={onClose} title="Gestión RRHH">
-                                <i className="bi bi-people fs-5"></i>
-                                {!isCollapsed && <span className="ms-3">Gestión RRHH</span>}
-                            </NavLink>
+                            {hasPermission('Permissions.Employees.View') && (
+                                <NavLink to="/empleados" className={({ isActive }) => getNavLinkClass(isActive)} onClick={onClose} title="Gestión RRHH">
+                                    <i className="bi bi-people fs-5"></i>
+                                    {!isCollapsed && <span className="ms-3">Gestión RRHH</span>}
+                                </NavLink>
+                            )}
 
-                            <NavLink to="/fichajes" className={({ isActive }) => getNavLinkClass(isActive)} onClick={onClose} title="Control Fichajes">
-                                <i className="bi bi-clock-history fs-5"></i>
-                                {!isCollapsed && <span className="ms-3">Control Fichajes</span>}
-                            </NavLink>
+                            {/* Fichajes logic: maybe requires different permission? reusing existing link for now */}
+                            {hasPermission('Permissions.TimeClock.ViewHistory') && (
+                                <NavLink to="/fichajes" className={({ isActive }) => getNavLinkClass(isActive)} onClick={onClose} title="Control Fichajes">
+                                    <i className="bi bi-clock-history fs-5"></i>
+                                    {!isCollapsed && <span className="ms-3">Control Fichajes</span>}
+                                </NavLink>
+                            )}
 
-                            <NavLink to="/reportes" className={({ isActive }) => getNavLinkClass(isActive)} onClick={onClose} title="Reportes">
-                                <i className="bi bi-file-earmark-bar-graph fs-5"></i>
-                                {!isCollapsed && <span className="ms-3">Reportes</span>}
-                            </NavLink>
+                            {hasPermission('Permissions.Reports.View') && (
+                                <NavLink to="/reportes" className={({ isActive }) => getNavLinkClass(isActive)} onClick={onClose} title="Reportes">
+                                    <i className="bi bi-file-earmark-bar-graph fs-5"></i>
+                                    {!isCollapsed && <span className="ms-3">Reportes</span>}
+                                </NavLink>
+                            )}
 
-                            <NavLink to="/configuraciones" className={({ isActive }) => getNavLinkClass(isActive)} onClick={onClose} title="Configuración">
-                                <i className="bi bi-gear fs-5"></i>
-                                {!isCollapsed && <span className="ms-3">Configuración</span>}
-                            </NavLink>
+                            {hasPermission('Permissions.Settings.View') && (
+                                <NavLink to="/configuraciones" className={({ isActive }) => getNavLinkClass(isActive)} onClick={onClose} title="Configuración">
+                                    <i className="bi bi-gear fs-5"></i>
+                                    {!isCollapsed && <span className="ms-3">Configuración</span>}
+                                </NavLink>
+                            )}
                         </>
                     )}
                 </nav>
