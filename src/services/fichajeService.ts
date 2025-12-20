@@ -52,5 +52,14 @@ export const fichajeService = {
     delete: async (id: number) => {
         const response = await axiosClient.delete(`/Fichajes/${id}`);
         return response.data;
+    },
+
+    updateObservacion: async (idEmpleado: number, fecha: string, observacion: string) => {
+        const response = await axiosClient.post('/Fichajes/ActualizarObservacionDiaria', {
+            idEmpleado,
+            fecha,
+            observacion
+        });
+        return response.data;
     }
 };

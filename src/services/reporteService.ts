@@ -15,8 +15,21 @@ export interface DetalleDiario {
     minutosExtrasDiurnas: number;
     minutosExtrasNocturnas: number;
     minutosDeficit: number;
+    pagoDiarioBase: number;
     pagoNetoDia: number;
     logCalculo: string;
+    observacion: string;
+}
+
+export interface AdelantoDetalle {
+    idAdelanto: number;
+    idEmpleado: number;
+    nombreEmpleado: string;
+    fechaSolicitud: string;
+    monto: number;
+    descripcion: string;
+    estado: string;
+    fechaAprobacion: string | null;
 }
 
 export interface ReporteNomina {
@@ -27,6 +40,7 @@ export interface ReporteNomina {
     totalDescuentosAdelantos: number;
     netoAPagar: number;
     detallesDiarios: DetalleDiario[];
+    adelantos: AdelantoDetalle[];
 }
 
 export const reporteService = {

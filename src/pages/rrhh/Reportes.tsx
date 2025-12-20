@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Form, Button, Table, Card, Row, Col, Spinner, Alert, Badge } from 'react-bootstrap';
 import { reporteService, ReporteNomina } from '../../services/reporteService';
 import { empleadoService } from '../../services/empleadoService';
+import { fichajeService } from '../../services/fichajeService';
 import { Empleado } from '../../types';
 
 // Librerías para exportar
@@ -27,6 +28,15 @@ const Reportes = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
+    // Estado para edición inline de observaciones
+    const [editingObservacion, setEditingObservacion] = useState<{ [key: number]: string }>({});
+
+    // Helper para obtener adelantos de un día específico
+    const getAdelantosDelDia = (fecha: string) => {
+        if (!reporte) return [];
+        return reporte.adelantos.filter(a => a.fechaSolicitud === fecha);
+    };
+
     useEffect(() => {
         loadEmpleados();
     }, []);
@@ -40,12 +50,8 @@ const Reportes = () => {
         }
     };
 
-    const handleGenerar = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (selectedEmpId === 0) {
-            alert("Seleccione un empleado");
-            return;
-        }
+    const fetchReport = async () => {
+        if (selectedEmpId === 0) return;
 
         setLoading(true);
         setError('');
@@ -65,6 +71,15 @@ const Reportes = () => {
         }
     };
 
+    const handleGenerar = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (selectedEmpId === 0) {
+            alert("Seleccione un empleado");
+            return;
+        }
+        await fetchReport();
+    };
+
     // Helper para encontrar el nombre del empleado seleccionado
     const getNombreEmpleado = () => {
         const emp = empleados.find(e => e.idEmpleado === selectedEmpId);
@@ -81,19 +96,37 @@ const Reportes = () => {
         doc.setFontSize(11);
         doc.text(`Periodo: ${reporte.fechaInicio} al ${reporte.fechaFin}`, 14, 28);
 
-        const tableData = reporte.detallesDiarios.map(dia => [
-            dia.fecha,
-            dia.diaSemana,
-            dia.horaEntrada || '-',
-            dia.horaSalida || '-',
-            `$${dia.pagoNetoDia.toFixed(2)}`
-        ]);
+        const tableData = reporte.detallesDiarios.map((dia, idx) => {
+            const adelantosDelDia = getAdelantosDelDia(dia.fecha);
+            const totalAdelantosDelDia = adelantosDelDia.reduce((sum, a) => sum + a.monto, 0);
+            const pagoExtras = (dia.minutosExtrasDiurnas / 60 * reporte.totalIngresos / reporte.detallesDiarios.length / 8 * 1.5) +
+                (dia.minutosExtrasNocturnas / 60 * reporte.totalIngresos / reporte.detallesDiarios.length / 8 * 2);
+            const deducciones = dia.minutosDeficit / 60 * reporte.totalIngresos / reporte.detallesDiarios.length / 8;
+            const netoDespuesAdelantos = dia.pagoNetoDia - totalAdelantosDelDia;
+            const notasAdelantos = adelantosDelDia.map(a => a.descripcion).join('; ') || '-';
+
+            return [
+                dia.fecha,
+                dia.horaEntrada || '-',
+                dia.horaSalida || '-',
+                `$${dia.pagoDiarioBase.toFixed(2)}`,
+                `D:${Math.round(dia.minutosExtrasDiurnas)}m N:${Math.round(dia.minutosExtrasNocturnas)}m`,
+                `$${pagoExtras.toFixed(2)}`,
+                `$${deducciones.toFixed(2)}`,
+                `$${dia.pagoNetoDia.toFixed(2)}`,
+                `$${netoDespuesAdelantos.toFixed(2)}`,
+                totalAdelantosDelDia > 0 ? `$${totalAdelantosDelDia.toFixed(2)}` : '-',
+                notasAdelantos,
+                editingObservacion[idx] || dia.observacion || '-'
+            ];
+        });
 
         autoTable(doc, {
             startY: 35,
-            head: [['Fecha', 'Día', 'Entrada', 'Salida', 'Pago Día']],
+            head: [['Fecha', 'Entrada', 'Salida', 'Pago Base', 'Extras', 'Pago Extras', 'Deducciones', 'Neto Diario', 'Neto-Adelantos', 'Adelanto', 'Nota', 'Observación']],
             body: tableData,
-            foot: [['', '', '', 'TOTAL NETO:', `$${reporte.netoAPagar.toFixed(2)}`]]
+            foot: [['', '', '', '', '', '', '', '', 'TOTAL NETO:', `$${reporte.netoAPagar.toFixed(2)}`, '', '']],
+            styles: { fontSize: 7 }
         });
 
         doc.save(`Nomina_${getNombreEmpleado()}.pdf`);
@@ -103,23 +136,48 @@ const Reportes = () => {
     const exportExcel = () => {
         if (!reporte) return;
 
-        const data = reporte.detallesDiarios.map(dia => ({
-            Fecha: dia.fecha,
-            Dia: dia.diaSemana,
-            Entrada: dia.horaEntrada,
-            Salida: dia.horaSalida,
-            Extras_Diurnas_Min: dia.minutosExtrasDiurnas,
-            Extras_Nocturnas_Min: dia.minutosExtrasNocturnas,
-            Deduccion_Min: dia.minutosDeficit,
-            Pago_Neto: dia.pagoNetoDia
-        }));
+        const data = reporte.detallesDiarios.map((dia, idx) => {
+            const adelantosDelDia = getAdelantosDelDia(dia.fecha);
+            const totalAdelantosDelDia = adelantosDelDia.reduce((sum, a) => sum + a.monto, 0);
+            const pagoExtras = (dia.minutosExtrasDiurnas / 60 * reporte.totalIngresos / reporte.detallesDiarios.length / 8 * 1.5) +
+                (dia.minutosExtrasNocturnas / 60 * reporte.totalIngresos / reporte.detallesDiarios.length / 8 * 2);
+            const deducciones = dia.minutosDeficit / 60 * reporte.totalIngresos / reporte.detallesDiarios.length / 8;
+            const netoDespuesAdelantos = dia.pagoNetoDia - totalAdelantosDelDia;
+            const notasAdelantos = adelantosDelDia.map(a => a.descripcion).join('; ') || '';
+
+            return {
+                Fecha: dia.fecha,
+                Dia: dia.diaSemana,
+                Entrada: dia.horaEntrada,
+                Salida: dia.horaSalida,
+                Pago_Base: dia.pagoDiarioBase,
+                Extras_Diurnas_Min: dia.minutosExtrasDiurnas,
+                Extras_Nocturnas_Min: dia.minutosExtrasNocturnas,
+                Pago_Extras: pagoExtras,
+                Deduccion_Min: dia.minutosDeficit,
+                Deducciones: deducciones,
+                Neto_Diario: dia.pagoNetoDia,
+                Neto_Despues_Adelantos: netoDespuesAdelantos,
+                Adelanto: totalAdelantosDelDia,
+                Nota: notasAdelantos,
+                Observacion: editingObservacion[idx] || dia.observacion || ''
+            };
+        });
 
         // Agregar fila de totales
         data.push({
             Fecha: 'TOTALES',
             Dia: '', Entrada: '', Salida: '',
-            Extras_Diurnas_Min: 0, Extras_Nocturnas_Min: 0, Deduccion_Min: 0,
-            Pago_Neto: reporte.totalIngresos
+            Pago_Base: 0,
+            Extras_Diurnas_Min: 0, Extras_Nocturnas_Min: 0,
+            Pago_Extras: 0,
+            Deduccion_Min: 0,
+            Deducciones: 0,
+            Neto_Diario: reporte.totalIngresos,
+            Neto_Despues_Adelantos: reporte.netoAPagar,
+            Adelanto: reporte.totalDescuentosAdelantos,
+            Nota: '',
+            Observacion: ''
         });
 
         const ws = XLSX.utils.json_to_sheet(data);
@@ -232,55 +290,104 @@ const Reportes = () => {
                     <Card className="shadow-sm">
                         <Card.Header className="bg-light fw-bold">Detalle Diario</Card.Header>
                         <div className="table-responsive">
-                            <Table hover className="mb-0 align-middle table-sm" style={{ fontSize: '0.9rem' }}>
+                            <Table hover className="mb-0 align-middle table-sm" style={{ fontSize: '0.85rem' }}>
                                 <thead className="table-light">
                                     <tr>
                                         <th>Fecha</th>
                                         <th>Entrada</th>
                                         <th>Salida</th>
-                                        <th>Horas</th>
+                                        <th className="text-end">Pago Base</th>
                                         <th>Extras (D/N)</th>
-                                        <th>Observación</th>
-                                        <th className="text-end">Pago ($)</th>
+                                        <th className="text-end">Pago Extras</th>
+                                        <th className="text-end">Deducciones</th>
+                                        <th className="text-end">Neto Diario</th>
+                                        <th className="text-end">Neto - Adelantos</th>
+                                        <th className="text-end">Adelanto</th>
+                                        <th style={{ minWidth: '150px' }}>Nota</th>
+                                        <th style={{ minWidth: '150px' }}>Observación</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {reporte.detallesDiarios.map((dia, idx) => (
-                                        <tr key={idx}>
-                                            <td>
-                                                <div className="fw-bold">{dia.fecha}</div>
-                                                <small className="text-muted">{dia.diaSemana}</small>
-                                            </td>
-                                            <td>{dia.horaEntrada || '-'}</td>
-                                            <td>{dia.horaSalida || '-'}</td>
-                                            <td>
-                                                {(dia.minutosJornadaTotal / 60).toFixed(1)}h
-                                            </td>
-                                            <td>
-                                                {dia.minutosExtrasDiurnas > 0 && (
-                                                    <Badge bg="warning" text="dark" className="me-1" title="Extras Diurnas">
-                                                        D: {Math.round(dia.minutosExtrasDiurnas)}m
-                                                    </Badge>
-                                                )}
-                                                {dia.minutosExtrasNocturnas > 0 && (
-                                                    <Badge bg="dark" className="me-1" title="Extras Nocturnas">
-                                                        N: {Math.round(dia.minutosExtrasNocturnas)}m
-                                                    </Badge>
-                                                )}
-                                                {dia.minutosDeficit > 0 && (
-                                                    <Badge bg="danger" title="Atraso / Salida temprana">
-                                                        -{Math.round(dia.minutosDeficit)}m
-                                                    </Badge>
-                                                )}
-                                            </td>
-                                            <td style={{ maxWidth: '200px' }} className="text-truncate" title={dia.logCalculo}>
-                                                <small className="text-muted">{dia.logCalculo}</small>
-                                            </td>
-                                            <td className="text-end fw-bold">
-                                                ${dia.pagoNetoDia.toFixed(2)}
-                                            </td>
-                                        </tr>
-                                    ))}
+                                    {reporte.detallesDiarios.map((dia, idx) => {
+                                        const adelantosDelDia = getAdelantosDelDia(dia.fecha);
+                                        const totalAdelantosDelDia = adelantosDelDia.reduce((sum, a) => sum + a.monto, 0);
+                                        const pagoExtras = (dia.minutosExtrasDiurnas / 60 * reporte.totalIngresos / reporte.detallesDiarios.length / 8 * 1.5) +
+                                            (dia.minutosExtrasNocturnas / 60 * reporte.totalIngresos / reporte.detallesDiarios.length / 8 * 2);
+                                        const deducciones = dia.minutosDeficit / 60 * reporte.totalIngresos / reporte.detallesDiarios.length / 8;
+                                        const netoDespuesAdelantos = dia.pagoNetoDia - totalAdelantosDelDia;
+
+                                        return (
+                                            <tr key={idx}>
+                                                <td>
+                                                    <div className="fw-bold">{dia.fecha}</div>
+                                                    <small className="text-muted">{dia.diaSemana}</small>
+                                                </td>
+                                                <td>{dia.horaEntrada || '-'}</td>
+                                                <td>{dia.horaSalida || '-'}</td>
+                                                <td className="text-end">${dia.pagoDiarioBase?.toFixed(2) || '0.00'}</td>
+                                                <td>
+                                                    {dia.minutosExtrasDiurnas > 0 && (
+                                                        <Badge bg="warning" text="dark" className="me-1" title="Extras Diurnas">
+                                                            D: {Math.round(dia.minutosExtrasDiurnas)}m
+                                                        </Badge>
+                                                    )}
+                                                    {dia.minutosExtrasNocturnas > 0 && (
+                                                        <Badge bg="dark" className="me-1" title="Extras Nocturnas">
+                                                            N: {Math.round(dia.minutosExtrasNocturnas)}m
+                                                        </Badge>
+                                                    )}
+                                                    {dia.minutosDeficit > 0 && (
+                                                        <Badge bg="danger" title="Atraso / Salida temprana">
+                                                            -{Math.round(dia.minutosDeficit)}m
+                                                        </Badge>
+                                                    )}
+                                                </td>
+                                                <td className="text-end text-success">${pagoExtras.toFixed(2)}</td>
+                                                <td className="text-end text-danger">${deducciones.toFixed(2)}</td>
+                                                <td className="text-end fw-bold">${dia.pagoNetoDia.toFixed(2)}</td>
+                                                <td className="text-end fw-bold text-primary">${netoDespuesAdelantos.toFixed(2)}</td>
+                                                <td className="text-end">
+                                                    {totalAdelantosDelDia > 0 ? `$${totalAdelantosDelDia.toFixed(2)}` : '-'}
+                                                </td>
+                                                <td style={{ maxWidth: '150px' }}>
+                                                    {adelantosDelDia.length > 0 ? (
+                                                        <small className="text-muted">
+                                                            {adelantosDelDia.map(a => a.descripcion).join('; ')}
+                                                        </small>
+                                                    ) : '-'}
+                                                </td>
+                                                <td style={{ maxWidth: '150px' }}>
+                                                    <input
+                                                        type="text"
+                                                        className="form-control form-control-sm"
+                                                        value={editingObservacion[idx] !== undefined ? editingObservacion[idx] : dia.observacion || ''}
+                                                        onChange={(e) => setEditingObservacion({ ...editingObservacion, [idx]: e.target.value })}
+                                                        onKeyDown={async (e) => {
+                                                            if (e.key === 'Enter') {
+                                                                const newVal = editingObservacion[idx];
+                                                                if (newVal === undefined) return; // No changes
+
+                                                                try {
+                                                                    await fichajeService.updateObservacion(reporte.idEmpleado, dia.fecha, newVal);
+                                                                    // Refresh report to see saved changes
+                                                                    await fetchReport();
+                                                                    // Clear editing state for this row or keep it? 
+                                                                    // Better to clear or update the initial value. report refresh will update dia.observacion
+                                                                    const newEditing = { ...editingObservacion };
+                                                                    delete newEditing[idx];
+                                                                    setEditingObservacion(newEditing);
+                                                                } catch (err) {
+                                                                    console.error(err);
+                                                                    alert('Error updating observation');
+                                                                }
+                                                            }
+                                                        }}
+                                                        placeholder="Click para añadir nota..."
+                                                    />
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
                                 </tbody>
                             </Table>
                         </div>
