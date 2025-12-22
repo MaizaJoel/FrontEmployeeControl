@@ -2,18 +2,32 @@ import { createContext, useContext, useState, ReactNode, useEffect } from 'react
 import { jwtDecode } from "jwt-decode";
 
 // Define the permissions mapping here for fallback (matches backend AppPermissions.cs)
+// Define the permissions mapping here for fallback (matches backend AppPermissions.cs)
 const DEFAULT_ROLE_PERMISSIONS: Record<string, string[]> = {
     Admin: ['ALL'], // Special keyword for full access
     Asistente: [
+        'Permissions.Dashboard.View',
         'Permissions.Employees.View',
         'Permissions.Employees.Create',
         'Permissions.Employees.Edit',
         'Permissions.Positions.View',
         'Permissions.Advances.ViewAll',
+        'Permissions.Advances.Manage',
+        'Permissions.Advances.Approve',
         'Permissions.TimeClock.ViewHistory',
-        'Permissions.Reports.View'
+        'Permissions.Reports.View',
+        'Permissions.Holidays.View'
     ],
-    Employee: []
+    Empleado: [ // 'Empleado' matches backend role name often used (or 'Employee'?) Backend says 'Employee', let's support both or check
+        'Permissions.Dashboard.View',
+        'Permissions.MyData.View',
+        'Permissions.Advances.Request'
+    ],
+    Employee: [ // Duplicate for safety if role name varies
+        'Permissions.Dashboard.View',
+        'Permissions.MyData.View',
+        'Permissions.Advances.Request'
+    ]
 };
 
 interface User {
@@ -30,6 +44,7 @@ interface AuthContextType {
     logout: () => void;
     isAuthenticated: boolean;
     hasPermission: (permission: string) => boolean;
+    loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -57,6 +72,7 @@ interface DecodedToken {
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
     const [user, setUser] = useState<User | null>(null);
+    const [loading, setLoading] = useState(true);
 
     // Helper to normalize permissions (from token or fallback)
     const getPermissions = (decoded: DecodedToken, role: string): string[] => {
@@ -113,6 +129,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
                 localStorage.removeItem('token');
             }
         }
+        setLoading(false);
     }, []);
 
     const login = (token: string) => {
@@ -152,7 +169,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         login,
         logout,
         isAuthenticated: !!user,
-        hasPermission
+        hasPermission,
+        loading
     };
 
     return (

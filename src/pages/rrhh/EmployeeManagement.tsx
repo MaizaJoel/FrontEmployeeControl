@@ -1,49 +1,9 @@
-import { useState } from 'react';
-import { Tab, Tabs } from 'react-bootstrap';
-import Empleados from './Empleados';
-import Cargos from './Cargos';
-import Roles from './Roles';
-import UserRoles from './UserRoles';
-import Adelantos from './Adelantos';
+import { Nav } from 'react-bootstrap';
+import { Outlet, NavLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
 const EmployeeManagement = () => {
-    const [key, setKey] = useState('empleados');
     const { hasPermission } = useAuth();
-
-    // Definimos la configuración de las pestañas
-    const tabsConfig = [
-        {
-            key: 'empleados',
-            title: 'Lista de Empleados',
-            component: <Empleados />,
-            visible: hasPermission('Permissions.Employees.View')
-        },
-        {
-            key: 'cargos',
-            title: 'Cargos (Puestos)',
-            component: <Cargos />,
-            visible: hasPermission('Permissions.Positions.View')
-        },
-        {
-            key: 'roles',
-            title: 'Roles (Seguridad)',
-            component: <Roles />,
-            visible: hasPermission('Permissions.Roles.Manage')
-        },
-        {
-            key: 'userRoles',
-            title: 'Asignación de Roles',
-            component: <UserRoles />,
-            visible: hasPermission('Permissions.Roles.Manage') // Or maybe a specific permission for assigning roles?
-        },
-        {
-            key: 'adelantos',
-            title: 'Solicitudes (Adelantos)',
-            component: <Adelantos />,
-            visible: true // All authenticated users can see their own advances
-        }
-    ];
 
     return (
         <div className="container-fluid p-4 animate-fade-in">
@@ -52,22 +12,51 @@ const EmployeeManagement = () => {
                 Gestión de Recursos Humanos
             </h2>
 
-            <Tabs
-                id="employee-management-tabs"
-                activeKey={key}
-                onSelect={(k) => setKey(k || 'empleados')}
-                className="mb-3"
-            >
-                {/* Renderizamos dinámicamente filtrando los visibles */}
-                {tabsConfig
-                    .filter(tab => tab.visible)
-                    .map(tab => (
-                        <Tab eventKey={tab.key} title={tab.title} key={tab.key}>
-                            {tab.component}
-                        </Tab>
-                    ))
-                }
-            </Tabs>
+            <Nav variant="tabs" className="mb-3">
+                {hasPermission('Permissions.Employees.View') && (
+                    <Nav.Item>
+                        <Nav.Link as={NavLink} to="lista">
+                            Lista de Empleados
+                        </Nav.Link>
+                    </Nav.Item>
+                )}
+
+                {hasPermission('Permissions.Positions.View') && (
+                    <Nav.Item>
+                        <Nav.Link as={NavLink} to="cargos">
+                            Cargos (Puestos)
+                        </Nav.Link>
+                    </Nav.Item>
+                )}
+
+                {hasPermission('Permissions.Roles.Manage') && (
+                    <Nav.Item>
+                        <Nav.Link as={NavLink} to="roles">
+                            Roles (Seguridad)
+                        </Nav.Link>
+                    </Nav.Item>
+                )}
+
+                {hasPermission('Permissions.Roles.Manage') && (
+                    <Nav.Item>
+                        <Nav.Link as={NavLink} to="asignacion">
+                            Asignación de Roles
+                        </Nav.Link>
+                    </Nav.Item>
+                )}
+
+                {/* Visible para todos los autenticados, pero este layout está protegido por RutaAdmin usualmente. 
+                    Si un admin entra aquí, ve adelantos. */}
+                <Nav.Item>
+                    <Nav.Link as={NavLink} to="adelantos">
+                        Solicitudes (Adelantos)
+                    </Nav.Link>
+                </Nav.Item>
+            </Nav>
+
+            <div className="bg-white p-3 border border-top-0 rounded-bottom shadow-sm" style={{ minHeight: '500px' }}>
+                <Outlet />
+            </div>
         </div>
     );
 };

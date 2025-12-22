@@ -56,9 +56,9 @@ export const fichajeService = {
 
     updateObservacion: async (idEmpleado: number, fecha: string, observacion: string) => {
         const response = await axiosClient.post('/Fichajes/ActualizarObservacionDiaria', {
-            idEmpleado,
-            fecha,
-            observacion
+            IdEmpleado: idEmpleado,
+            Fecha: fecha,
+            Observacion: observacion
         });
         return response.data;
     }

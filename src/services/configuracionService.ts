@@ -26,12 +26,12 @@ export const configuracionService = {
     },
 
     update: async (id: number, data: Configuracion) => {
-        const response = await axiosClient.put(/Configuraciones/, data);
+        const response = await axiosClient.put(`/Configuraciones/${id}`, data);
         return response.data;
     },
 
     delete: async (id: number) => {
-        const response = await axiosClient.delete(/Configuraciones/);
+        const response = await axiosClient.delete(`/Configuraciones/${id}`);
         return response.data;
     }
 };

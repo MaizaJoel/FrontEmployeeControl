@@ -1,19 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Table, Button, Modal, Form, Alert, Spinner } from 'react-bootstrap';
-
-// Interface for Configuration
-interface Configuracion {
-    idConfiguracion: number;
-    clave: string;
-    valor: string;
-    descripcion?: string;
-}
+import { useNavigate } from 'react-router-dom';
+import { configuracionService, Configuracion } from '../../services/configuracionService';
 
 const Configuraciones = () => {
-    // Mock data for now
+    const navigate = useNavigate();
     const [configuraciones, setConfiguraciones] = useState<Configuracion[]>([]);
     const [loading, setLoading] = useState(false);
-    // const [error, setError] = useState('');
+    const [error, setError] = useState('');
 
     const [showModal, setShowModal] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
@@ -30,15 +24,15 @@ const Configuraciones = () => {
 
     const loadConfiguraciones = async () => {
         setLoading(true);
-        // Simulate API call
-        setTimeout(() => {
-            setConfiguraciones([
-                { idConfiguracion: 1, clave: 'EMPRESA_NOMBRE', valor: 'Mi Empresa S.A.', descripcion: 'Nombre legal de la empresa' },
-                { idConfiguracion: 2, clave: 'HORA_ENTRADA', valor: '08:00', descripcion: 'Hora de entrada por defecto' },
-                { idConfiguracion: 3, clave: 'HORA_SALIDA', valor: '17:00', descripcion: 'Hora de salida por defecto' }
-            ]);
+        try {
+            const data = await configuracionService.getAll();
+            setConfiguraciones(data);
+        } catch (err) {
+            console.error(err);
+            setError('Error al cargar configuraciones.');
+        } finally {
             setLoading(false);
-        }, 500);
+        }
     };
 
     const handleOpenCreate = () => {
@@ -53,37 +47,49 @@ const Configuraciones = () => {
         setShowModal(true);
     };
 
-    const handleSave = (e: React.FormEvent) => {
+    const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (editingId) {
-            // Update logic
-            setConfiguraciones(prev => prev.map(c => c.idConfiguracion === editingId ? formData : c));
-        } else {
-            // Create logic
-            setConfiguraciones(prev => [...prev, { ...formData, idConfiguracion: Date.now() }]);
+        setError('');
+        try {
+            if (editingId) {
+                await configuracionService.update(editingId, formData);
+            } else {
+                await configuracionService.create(formData);
+            }
+            setShowModal(false);
+            loadConfiguraciones();
+        } catch (err: any) {
+            console.error(err);
+            setError('Error al guardar.');
         }
-        setShowModal(false);
     };
 
-    const handleDelete = (id: number) => {
+    const handleDelete = async (id: number) => {
         if (window.confirm('¿Seguro que deseas eliminar esta configuración?')) {
-            setConfiguraciones(prev => prev.filter(c => c.idConfiguracion !== id));
+            try {
+                await configuracionService.delete(id);
+                loadConfiguraciones();
+            } catch (err) {
+                alert('Error al eliminar');
+            }
         }
     };
 
     return (
-        <div className="container mt-4 animate-fade-in">
+        <div className="container mt-4 animate__animated animate__fadeIn">
             <div className="d-flex justify-content-between align-items-center mb-4">
                 <h2 className="fw-bold text-primary">Configuraciones del Sistema</h2>
-                <Button variant="primary" onClick={handleOpenCreate}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16" className="me-2">
-                        <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z" />
-                    </svg>
-                    Nueva Configuración
-                </Button>
+                <div>
+                    <Button variant="outline-primary" className="me-2" onClick={() => navigate('/rrhh/configuracion-tasas')}>
+                        ⚡ Gestionar Tasas y Horarios
+                    </Button>
+                    <Button variant="primary" onClick={handleOpenCreate}>
+                        Nueva Variable
+                    </Button>
+                </div>
             </div>
 
-            {/* {error && <Alert variant="danger">{error}</Alert>} */}
+            {error && <Alert variant="danger">{error}</Alert>}
 
             {loading ? (
                 <div className="text-center py-5"><Spinner animation="border" /></div>
@@ -138,7 +144,7 @@ const Configuraciones = () => {
             <Modal show={showModal} onHide={() => setShowModal(false)} centered>
                 <Form onSubmit={handleSave}>
                     <Modal.Header closeButton className="border-0 pb-0">
-                        <Modal.Title className="fw-bold">{editingId ? 'Editar Configuración' : 'Nueva Configuración'}</Modal.Title>
+                        <Modal.Title className="fw-bold">{editingId ? 'Editar variable' : 'Nueva variable'}</Modal.Title>
                     </Modal.Header>
                     <Modal.Body>
                         <Alert variant="warning" className="small">

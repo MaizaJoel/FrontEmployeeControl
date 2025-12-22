@@ -4,7 +4,10 @@ import { empleadoService } from '../../services/empleadoService';
 import { Empleado } from '../../types';
 import EmpleadoModal from '../../components/empleados/EmpleadoModal';
 
+import { useAuth } from '../../context/AuthContext';
+
 const Empleados = () => {
+    const { hasPermission } = useAuth();
     const [empleados, setEmpleados] = useState<Empleado[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -69,12 +72,14 @@ const Empleados = () => {
     return (
         <div className="animate-fade-in">
             <div className="d-flex justify-content-end mb-4">
-                <Button variant="primary" onClick={handleCreate}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16" className="me-2">
-                        <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z" />
-                    </svg>
-                    Nuevo Empleado
-                </Button>
+                {hasPermission('Permissions.Employees.Create') && (
+                    <Button variant="primary" onClick={handleCreate}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16" className="me-2">
+                            <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z" />
+                        </svg>
+                        Nuevo Empleado
+                    </Button>
+                )}
             </div>
 
             {error && <Alert variant="danger">{error}</Alert>}
@@ -110,29 +115,33 @@ const Empleados = () => {
                                     </td>
                                     <td>
                                         {/* Status Switch */}
-                                        <Form.Check
-                                            type="switch"
-                                            id={`switch-${emp.idEmpleado}`}
-                                            checked={emp.activo}
-                                            onChange={() => handleToggleStatus(emp)}
-                                            label={emp.activo ? "Activo" : "Inactivo"}
-                                            className={emp.activo ? "text-success fw-bold" : "text-secondary"}
-                                        />
+                                        {hasPermission('Permissions.Employees.Edit') && (
+                                            <Form.Check
+                                                type="switch"
+                                                id={`switch-${emp.idEmpleado}`}
+                                                checked={emp.activo}
+                                                onChange={() => handleToggleStatus(emp)}
+                                                label={emp.activo ? "Activo" : "Inactivo"}
+                                                className={`mb-2 ${emp.activo ? "text-success fw-bold" : "text-secondary"}`}
+                                            />
+                                        )}
                                     </td>
                                     <td className="text-center">
                                         {/* Pencil Icon with Tooltip */}
-                                        <OverlayTrigger
-                                            placement="top"
-                                            overlay={<Tooltip>Editar Empleado</Tooltip>}
-                                        >
-                                            <Button
-                                                variant="link"
-                                                className="text-primary p-0 me-2"
-                                                title="Editar"
-                                                onClick={() => handleEdit(emp)}
-                                            > ✏️
-                                            </Button>
-                                        </OverlayTrigger>
+                                        {hasPermission('Permissions.Employees.Edit') && (
+                                            <OverlayTrigger
+                                                placement="top"
+                                                overlay={<Tooltip>Editar Empleado</Tooltip>}
+                                            >
+                                                <Button
+                                                    variant="link"
+                                                    className="text-primary p-0 me-2"
+                                                    title="Editar"
+                                                    onClick={() => handleEdit(emp)}
+                                                > ✏️
+                                                </Button>
+                                            </OverlayTrigger>
+                                        )}
                                     </td>
                                 </tr>
                             ))}

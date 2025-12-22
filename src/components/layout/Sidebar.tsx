@@ -68,7 +68,7 @@ const Sidebar = ({ onClose, isCollapsed = false }: SidebarProps) => {
                         {!isCollapsed && <span className="ms-3">Dashboard</span>}
                     </NavLink>
 
-                    <NavLink to="/fichajes" className={({ isActive }) => getNavLinkClass(isActive)} onClick={onClose} title="Registros Fichajes">
+                    <NavLink to="/rrhh/fichajes" className={({ isActive }) => getNavLinkClass(isActive)} onClick={onClose} title="Registros Fichajes">
                         <i className="bi bi-cash-coin fs-5"></i>
                         {!isCollapsed && <span className="ms-3">Registros Fichajes</span>}
                     </NavLink>
@@ -81,7 +81,7 @@ const Sidebar = ({ onClose, isCollapsed = false }: SidebarProps) => {
                             </small>
 
                             {hasPermission('Permissions.Employees.View') && (
-                                <NavLink to="/empleados" className={({ isActive }) => getNavLinkClass(isActive)} onClick={onClose} title="Gestión RRHH">
+                                <NavLink to="/rrhh/empleados" className={({ isActive }) => getNavLinkClass(isActive)} onClick={onClose} title="Gestión RRHH">
                                     <i className="bi bi-people fs-5"></i>
                                     {!isCollapsed && <span className="ms-3">Gestión RRHH</span>}
                                 </NavLink>
@@ -89,14 +89,14 @@ const Sidebar = ({ onClose, isCollapsed = false }: SidebarProps) => {
 
                             {/* Fichajes logic: maybe requires different permission? reusing existing link for now */}
                             {hasPermission('Permissions.TimeClock.ViewHistory') && (
-                                <NavLink to="/fichajes" className={({ isActive }) => getNavLinkClass(isActive)} onClick={onClose} title="Control Fichajes">
+                                <NavLink to="/rrhh/fichajes" className={({ isActive }) => getNavLinkClass(isActive)} onClick={onClose} title="Control Fichajes">
                                     <i className="bi bi-clock-history fs-5"></i>
                                     {!isCollapsed && <span className="ms-3">Control Fichajes</span>}
                                 </NavLink>
                             )}
 
                             {hasPermission('Permissions.Reports.View') && (
-                                <NavLink to="/reportes" className={({ isActive }) => getNavLinkClass(isActive)} onClick={onClose} title="Reportes">
+                                <NavLink to="/rrhh/reportes" className={({ isActive }) => getNavLinkClass(isActive)} onClick={onClose} title="Reportes">
                                     <i className="bi bi-file-earmark-bar-graph fs-5"></i>
                                     {!isCollapsed && <span className="ms-3">Reportes</span>}
                                 </NavLink>

@@ -3,8 +3,10 @@ import { Button, Table, Alert, Spinner } from 'react-bootstrap';
 import { roleService, Role } from '../../services/roleService';
 import RoleModal from '../../components/roles/RoleModal';
 import PermissionsModal from '../../components/roles/PermissionsModal';
+import { useAuth } from '../../context/AuthContext';
 
 const Roles = () => {
+    const { hasPermission } = useAuth();
     const [roles, setRoles] = useState<Role[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -65,9 +67,11 @@ const Roles = () => {
         <div className="container-fluid p-0 animate-fade-in">
             <div className="d-flex justify-content-between align-items-center mb-4">
                 <h5 className="text-muted mb-0">Definición de Roles</h5>
-                <Button variant="primary" size="sm" onClick={() => setShowCreateModal(true)}>
-                    <i className="bi bi-plus-lg me-2"></i> Nuevo Rol
-                </Button>
+                {hasPermission('Permissions.Roles.Manage') && (
+                    <Button variant="primary" size="sm" onClick={() => setShowCreateModal(true)}>
+                        <i className="bi bi-plus-lg me-2"></i> Nuevo Rol
+                    </Button>
+                )}
             </div>
 
             {error && <Alert variant="danger">{error}</Alert>}
@@ -91,21 +95,25 @@ const Roles = () => {
                                     <td className="fw-bold">{r.name}</td>
                                     <td className="text-end">
                                         {/* Botón Permisos */}
-                                        <Button variant="link" size="sm" className="me-2"
-                                            onClick={() => handleOpenPermisos(r)}
-                                            title="Configurar Permisos"
-                                        >
-                                            <i className="bi bi-shield-check"></i> Permisos
-                                        </Button>
+                                        {hasPermission('Permissions.Roles.Manage') && (
+                                            <Button variant="link" size="sm" className="me-2"
+                                                onClick={() => handleOpenPermisos(r)}
+                                                title="Configurar Permisos"
+                                            >
+                                                <i className="bi bi-shield-check"></i> Permisos
+                                            </Button>
+                                        )}
 
                                         {/* Botón Eliminar */}
-                                        <Button variant="link" className="text-danger p-0"
-                                            onClick={() => handleDelete(r.id, r.name)}
-                                            disabled={r.name === 'Admin' || r.name === 'Employee'}
-                                            title="Eliminar Rol"
-                                        >
-                                            <i className="bi bi-trash"></i>
-                                        </Button>
+                                        {hasPermission('Permissions.Roles.Manage') && (
+                                            <Button variant="link" className="text-danger p-0"
+                                                onClick={() => handleDelete(r.id, r.name)}
+                                                disabled={r.name === 'Admin' || r.name === 'Employee'}
+                                                title="Eliminar Rol"
+                                            >
+                                                <i className="bi bi-trash"></i>
+                                            </Button>
+                                        )}
                                     </td>
                                 </tr>
                             ))}

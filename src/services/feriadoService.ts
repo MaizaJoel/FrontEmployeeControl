@@ -23,12 +23,12 @@ export const feriadoService = {
     },
 
     update: async (id: number, data: Feriado) => {
-        const response = await axiosClient.put(/Feriados/, data);
+        const response = await axiosClient.put(`/Feriados/${id}`, data);
         return response.data;
     },
 
     delete: async (id: number) => {
-        const response = await axiosClient.delete(/Feriados/);
+        const response = await axiosClient.delete(`/Feriados/${id}`);
         return response.data;
     }
 };
