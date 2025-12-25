@@ -1,26 +1,27 @@
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
-import Login from './pages/auth/Login';
-import Dashboard from './pages/dashboard/Dashboard';
-import EmployeeManagement from './pages/rrhh/EmployeeManagement';
-import Adelantos from './pages/rrhh/Adelantos';
-import MainLayout from './components/layout/MainLayout';
+import Login from './features/auth/pages/Login';
+import Dashboard from './pages/dashboard/Dashboard'; // Keeping Dashboard as page for now if not moved
+import EmployeeManagement from './features/employees/pages/EmployeeManagement';
+import Adelantos from './features/employees/pages/Advances'; // Assuming moved/renamed or just generic
+import MainLayout from './shared/components/layout/MainLayout';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import KioscoLayout from './components/layout/KioscoLayout';
-import Kiosco from './pages/kiosco/Kiosco';
+import KioscoLayout from './shared/components/layout/KioscoLayout';
+import Kiosco from './features/attendance/pages/Kiosco';
 import './styles/TableStyles.css';
-import Fichajes from './pages/rrhh/Fichajes';
-import Reportes from './pages/rrhh/Reportes';
-import ConfiguracionesPage from './pages/admin/ConfiguracionesPage';
-import ConfiguracionTasas from './pages/rrhh/ConfiguracionTasas';
+import Fichajes from './features/attendance/pages/Fichajes'; // Updated path
+import Reportes from './features/reports/pages/MyReports';
+import ConfiguracionesPage from './features/configuration/pages/ConfigurationPage';
+import ConfiguracionTasas from './features/configuration/pages/RatesConfig';
 import { useAuth } from './context/AuthContext';
-import ConfiguracionesGeneral from './pages/admin/tabs/ConfiguracionesGeneral';
-import ConfiguracionesFeriados from './pages/admin/tabs/ConfiguracionesFeriados';
+import ConfiguracionesGeneral from './features/configuration/pages/GeneralConfig';
+import ConfiguracionesFeriados from './features/configuration/pages/HolidaysConfig';
+import PersonalClockIn from './features/attendance/pages/PersonalClockIn';
 
 // Imports for Employee Tabs
-import Empleados from './pages/rrhh/Empleados';
-import Cargos from './pages/rrhh/Cargos';
-import Roles from './pages/rrhh/Roles';
-import UserRoles from './pages/rrhh/UserRoles';
+import Empleados from './features/employees/pages/EmployeeList';
+import Cargos from './features/employees/pages/Cargos'; // Check filename
+import Roles from './features/employees/pages/Roles';
+import UserRoles from './features/employees/pages/UserRoles'; // Check filename
 
 const RutaProtegida = () => {
     const { isAuthenticated, loading } = useAuth();
@@ -43,65 +44,70 @@ const PermissionGuard = ({ permission }: { permission: string }) => {
     return <Outlet />;
 };
 
+import { ConfigProvider } from './context/ConfigContext';
+
 function App() {
     return (
-        <BrowserRouter>
-            <Routes>
-                <Route element={<RutaPublica />}>
-                    <Route path="/" element={<Login />} />
-                </Route>
+        <ConfigProvider>
+            <BrowserRouter>
+                <Routes>
+                    <Route element={<RutaPublica />}>
+                        <Route path="/" element={<Login />} />
+                    </Route>
 
-                <Route element={<KioscoLayout />}>
-                    <Route path="/kiosco" element={<Kiosco />} />
-                </Route>
+                    <Route element={<KioscoLayout />}>
+                        <Route path="/kiosco" element={<Kiosco />} />
+                    </Route>
 
-                <Route element={<RutaProtegida />}>
-                    <Route element={<MainLayout />}>
-                        <Route path="/dashboard" element={<Dashboard />} />
+                    <Route element={<RutaProtegida />}>
+                        <Route element={<MainLayout />}>
+                            <Route path="/dashboard" element={<Dashboard />} />
+                            <Route path="/marcar-asistencia" element={<PersonalClockIn />} />
 
-                        {/* Ruta para empleados normales (solo ven sus adelantos) */}
-                        <Route path="/adelantos" element={<Adelantos />} />
+                            {/* Ruta para empleados normales (solo ven sus adelantos) */}
+                            <Route path="/adelantos" element={<Adelantos />} />
 
-                        {/* RRHH Module */}
-                        <Route path="/rrhh">
-                            {/* Employee Management guarded by Employees.View */}
-                            <Route element={<PermissionGuard permission="Permissions.Employees.View" />}>
-                                <Route path="empleados" element={<EmployeeManagement />}>
-                                    <Route index element={<Navigate to="lista" replace />} />
-                                    <Route path="lista" element={<Empleados />} />
-                                    <Route path="cargos" element={<Cargos />} />
-                                    <Route path="roles" element={<Roles />} />
-                                    <Route path="asignacion" element={<UserRoles />} />
-                                    <Route path="adelantos" element={<Adelantos />} />
+                            {/* RRHH Module */}
+                            <Route path="/rrhh">
+                                {/* Employee Management guarded by Employees.View */}
+                                <Route element={<PermissionGuard permission="Permissions.Employees.View" />}>
+                                    <Route path="empleados" element={<EmployeeManagement />}>
+                                        <Route index element={<Navigate to="lista" replace />} />
+                                        <Route path="lista" element={<Empleados />} />
+                                        <Route path="cargos" element={<Cargos />} />
+                                        <Route path="roles" element={<Roles />} />
+                                        <Route path="asignacion" element={<UserRoles />} />
+                                        <Route path="adelantos" element={<Adelantos />} />
+                                    </Route>
+                                </Route>
+
+                                {/* Fichajes guarded by TimeClock.ViewHistory */}
+                                <Route element={<PermissionGuard permission="Permissions.TimeClock.ViewHistory" />}>
+                                    <Route path="fichajes" element={<Fichajes />} />
+                                </Route>
+
+                                {/* Reportes guarded by Reports.View */}
+                                <Route element={<PermissionGuard permission="Permissions.Reports.View" />}>
+                                    <Route path="reportes" element={<Reportes />} />
                                 </Route>
                             </Route>
 
-                            {/* Fichajes guarded by TimeClock.ViewHistory */}
-                            <Route element={<PermissionGuard permission="Permissions.TimeClock.ViewHistory" />}>
-                                <Route path="fichajes" element={<Fichajes />} />
-                            </Route>
-
-                            {/* Reportes guarded by Reports.View */}
-                            <Route element={<PermissionGuard permission="Permissions.Reports.View" />}>
-                                <Route path="reportes" element={<Reportes />} />
-                            </Route>
-                        </Route>
-
-                        {/* Config Module guarded by Settings.View */}
-                        <Route element={<PermissionGuard permission="Permissions.Settings.View" />}>
-                            <Route path="/configuraciones" element={<ConfiguracionesPage />}>
-                                <Route index element={<Navigate to="general" replace />} />
-                                <Route path="general" element={<ConfiguracionesGeneral />} />
-                                <Route path="feriados" element={<ConfiguracionesFeriados />} />
-                                <Route path="tasas" element={<ConfiguracionTasas />} />
+                            {/* Config Module guarded by Settings.View */}
+                            <Route element={<PermissionGuard permission="Permissions.Settings.View" />}>
+                                <Route path="/configuraciones" element={<ConfiguracionesPage />}>
+                                    <Route index element={<Navigate to="general" replace />} />
+                                    <Route path="general" element={<ConfiguracionesGeneral />} />
+                                    <Route path="feriados" element={<ConfiguracionesFeriados />} />
+                                    <Route path="tasas" element={<ConfiguracionTasas />} />
+                                </Route>
                             </Route>
                         </Route>
                     </Route>
-                </Route>
 
-                <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-        </BrowserRouter>
+                    <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+            </BrowserRouter>
+        </ConfigProvider>
     );
 }
 

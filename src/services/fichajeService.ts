@@ -24,6 +24,7 @@ export interface FichajeManual {
 
 export const fichajeService = {
     marcar: async (cedula: string) => {
+        console.log("Calling Fichajes/Marcar with cedula:", cedula);
         const response = await axiosClient.post<KioscoResponse>('/Fichajes/Marcar', { cedula });
         return response.data;
     },

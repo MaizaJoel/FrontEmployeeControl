@@ -15,23 +15,27 @@ const DEFAULT_ROLE_PERMISSIONS: Record<string, string[]> = {
         'Permissions.Advances.Manage',
         'Permissions.Advances.Approve',
         'Permissions.TimeClock.ViewHistory',
+        'Permissions.TimeClock.Mark',
         'Permissions.Reports.View',
         'Permissions.Holidays.View'
     ],
     Empleado: [ // 'Empleado' matches backend role name often used (or 'Employee'?) Backend says 'Employee', let's support both or check
         'Permissions.Dashboard.View',
         'Permissions.MyData.View',
-        'Permissions.Advances.Request'
+        'Permissions.Advances.Request',
+        'Permissions.TimeClock.Mark'
     ],
     Employee: [ // Duplicate for safety if role name varies
         'Permissions.Dashboard.View',
         'Permissions.MyData.View',
-        'Permissions.Advances.Request'
+        'Permissions.Advances.Request',
+        'Permissions.TimeClock.Mark'
     ]
 };
 
 interface User {
     username: string;
+    fullName: string;
     email: string;
     role: string;
     permissions: string[];
@@ -66,9 +70,14 @@ interface DecodedToken {
     email?: string;
     role?: string | string[];
     Permission?: string | string[]; // Backend sends "Permission"
+    Cedula?: string; // Explicit Cedula claim
     exp: number;
     [key: string]: any;
 }
+
+// Helper constants for claims
+const CLAIM_NAME = 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name';
+const CLAIM_ROLE = 'http://schemas.microsoft.com/ws/2008/06/identity/claims/role';
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
     const [user, setUser] = useState<User | null>(null);
@@ -109,13 +118,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
                 // Check expiration
                 if (decoded.exp * 1000 > Date.now()) {
                     // Handle role being string or array
-                    const rawRole = decoded.role || decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
+                    const rawRole = decoded.role || decoded[CLAIM_ROLE];
                     const userRole = Array.isArray(rawRole) ? rawRole[0] : rawRole || 'Employee';
+
+                    // Extract accurate username (Prioritize Cedula, then generic name, then fallback)
+                    const uniqueName = decoded.Cedula || decoded.unique_name || decoded.sub || decoded[CLAIM_NAME] || 'User';
 
                     const perms = getPermissions(decoded, userRole);
 
                     setUser({
-                        username: decoded.unique_name || decoded.sub || 'User',
+                        username: uniqueName,
+                        fullName: decoded.FullName || uniqueName,
                         email: decoded.email || '',
                         role: userRole,
                         permissions: perms,
@@ -136,13 +149,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         localStorage.setItem('token', token);
         try {
             const decoded = jwtDecode<DecodedToken>(token);
-            const rawRole = decoded.role || decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
+            const rawRole = decoded.role || decoded[CLAIM_ROLE];
             const userRole = Array.isArray(rawRole) ? rawRole[0] : rawRole || 'Employee';
+
+            const uniqueName = decoded.Cedula || decoded.unique_name || decoded.sub || decoded[CLAIM_NAME] || 'User';
 
             const perms = getPermissions(decoded, userRole);
 
             setUser({
-                username: decoded.unique_name || decoded.sub || 'User',
+                username: uniqueName,
+                fullName: decoded.FullName || uniqueName,
                 email: decoded.email || '',
                 role: userRole,
                 permissions: perms,
