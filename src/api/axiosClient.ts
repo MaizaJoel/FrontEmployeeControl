@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // ✅ Use environment variables for security and flexibility
-const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5038/api';
 
 // Validate that the API URL is configured
 if (!BASE_URL) {
