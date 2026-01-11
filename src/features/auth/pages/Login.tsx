@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Alert, Spinner } from 'react-bootstrap';
+import { Alert, Spinner, InputGroup, Button } from 'react-bootstrap';
 import axiosClient from '../../../api/axiosClient';
 import { useAuth } from '../../../context/AuthContext';
 import { useConfig } from '../../../context/ConfigContext';
@@ -8,6 +8,7 @@ import { useConfig } from '../../../context/ConfigContext';
 const Login = () => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
@@ -74,13 +75,24 @@ const Login = () => {
                     </div>
                     <div className="mb-4">
                         <label className="form-label">Contraseña</label>
-                        <input
-                            type="password"
-                            className="form-control"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required
-                        />
+                        <InputGroup>
+                            <input
+                                type={showPassword ? "text" : "password"}
+                                className="form-control"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                required
+                            />
+                            <Button
+                                variant="outline-secondary"
+                                onClick={() => setShowPassword(!showPassword)}
+                                tabIndex={-1}
+                                className="border-start-0"
+                                style={{ borderTopLeftRadius: 0, borderBottomLeftRadius: 0 }}
+                            >
+                                <i className={`bi bi-eye${showPassword ? '-slash' : ''}`}></i>
+                            </Button>
+                        </InputGroup>
                     </div>
                     <button
                         type="submit"

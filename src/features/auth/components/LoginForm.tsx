@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Modal, Button, Form, Alert, Spinner } from 'react-bootstrap';
+import { Modal, Button, Form, Alert, Spinner, InputGroup } from 'react-bootstrap';
 import { authService } from '../../../services/authService';
 
 interface Props {
@@ -11,6 +11,10 @@ const ChangePasswordModal = ({ show, handleClose }: Props) => {
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+
+    const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+    const [showNewPassword, setShowNewPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'danger', text: string } | null>(null);
@@ -71,34 +75,61 @@ const ChangePasswordModal = ({ show, handleClose }: Props) => {
 
                     <Form.Group className="mb-3">
                         <Form.Label>Contraseña Actual</Form.Label>
-                        <Form.Control
-                            type="password"
-                            value={currentPassword}
-                            onChange={e => setCurrentPassword(e.target.value)}
-                            required
-                        />
+                        <InputGroup>
+                            <Form.Control
+                                type={showCurrentPassword ? "text" : "password"}
+                                value={currentPassword}
+                                onChange={e => setCurrentPassword(e.target.value)}
+                                required
+                            />
+                            <Button
+                                variant="outline-secondary"
+                                onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                                tabIndex={-1}
+                            >
+                                <i className={`bi bi-eye${showCurrentPassword ? '-slash' : ''}`}></i>
+                            </Button>
+                        </InputGroup>
                     </Form.Group>
 
                     <hr />
 
                     <Form.Group className="mb-3">
                         <Form.Label>Nueva Contraseña</Form.Label>
-                        <Form.Control
-                            type="password"
-                            value={newPassword}
-                            onChange={e => setNewPassword(e.target.value)}
-                            required
-                        />
+                        <InputGroup>
+                            <Form.Control
+                                type={showNewPassword ? "text" : "password"}
+                                value={newPassword}
+                                onChange={e => setNewPassword(e.target.value)}
+                                required
+                            />
+                            <Button
+                                variant="outline-secondary"
+                                onClick={() => setShowNewPassword(!showNewPassword)}
+                                tabIndex={-1}
+                            >
+                                <i className={`bi bi-eye${showNewPassword ? '-slash' : ''}`}></i>
+                            </Button>
+                        </InputGroup>
                     </Form.Group>
 
                     <Form.Group className="mb-3">
                         <Form.Label>Confirmar Nueva Contraseña</Form.Label>
-                        <Form.Control
-                            type="password"
-                            value={confirmPassword}
-                            onChange={e => setConfirmPassword(e.target.value)}
-                            required
-                        />
+                        <InputGroup>
+                            <Form.Control
+                                type={showConfirmPassword ? "text" : "password"}
+                                value={confirmPassword}
+                                onChange={e => setConfirmPassword(e.target.value)}
+                                required
+                            />
+                            <Button
+                                variant="outline-secondary"
+                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                tabIndex={-1}
+                            >
+                                <i className={`bi bi-eye${showConfirmPassword ? '-slash' : ''}`}></i>
+                            </Button>
+                        </InputGroup>
                     </Form.Group>
                 </Modal.Body>
                 <Modal.Footer>
