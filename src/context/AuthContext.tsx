@@ -119,7 +119,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
                 if (decoded.exp * 1000 > Date.now()) {
                     // Handle role being string or array
                     const rawRole = decoded.role || decoded[CLAIM_ROLE];
-                    const userRole = Array.isArray(rawRole) ? rawRole[0] : rawRole || 'Employee';
+                    const userRole = Array.isArray(rawRole) ? rawRole[0] : rawRole || 'Empleado';
 
                     // Extract accurate username (Prioritize Cedula, then generic name, then fallback)
                     const uniqueName = decoded.Cedula || decoded.unique_name || decoded.sub || decoded[CLAIM_NAME] || 'User';
@@ -150,7 +150,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         try {
             const decoded = jwtDecode<DecodedToken>(token);
             const rawRole = decoded.role || decoded[CLAIM_ROLE];
-            const userRole = Array.isArray(rawRole) ? rawRole[0] : rawRole || 'Employee';
+            const userRole = Array.isArray(rawRole) ? rawRole[0] : rawRole || 'Empleado';
 
             const uniqueName = decoded.Cedula || decoded.unique_name || decoded.sub || decoded[CLAIM_NAME] || 'User';
 

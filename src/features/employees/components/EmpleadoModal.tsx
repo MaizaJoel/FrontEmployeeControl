@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Modal, Button, Form, Row, Col, Spinner, Alert } from 'react-bootstrap';
 import { Empleado, Cargo } from '../../../types';
 import { cargoService } from '../../../services/cargoService';
+import { roleService, Role } from '../../../services/roleService';
 
 interface EmpleadoModalProps {
     show: boolean;
@@ -10,29 +11,36 @@ interface EmpleadoModalProps {
     empleadoToEdit: Empleado | null;
 }
 
+// Extender la interfaz para incluir 'role', ya que Empleado base no lo tiene
+interface EmpleadoFormData extends Partial<Empleado> {
+    role?: string;
+}
+
 const EmpleadoModal = ({ show, handleClose, handleSave, empleadoToEdit }: EmpleadoModalProps) => {
     // --- STATES ---
-    const [formData, setFormData] = useState<Partial<Empleado>>({
+    const [formData, setFormData] = useState<EmpleadoFormData>({
         nombre: '',
         apellido: '',
         cedula: '',
         telefono: '',
         email: '',
         idCargo: 0,
-        activo: true
+        activo: true,
+        role: 'Empleado' // Default role
     });
 
     const [cargos, setCargos] = useState<Cargo[]>([]);
-    const [loadingCargos, setLoadingCargos] = useState(false);
+    const [roles, setRoles] = useState<Role[]>([]);
+    const [loadingData, setLoadingData] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [apiError, setApiError] = useState('');
 
     // --- EFFECTS ---
 
-    // Load cargos when modal opens
+    // Load data when modal opens
     useEffect(() => {
         if (show) {
-            loadCargos();
+            loadData();
         }
     }, [show]);
 
@@ -43,7 +51,8 @@ const EmpleadoModal = ({ show, handleClose, handleSave, empleadoToEdit }: Emplea
         } else {
             setFormData({
                 nombre: '', apellido: '', cedula: '', telefono: '',
-                email: '', idCargo: 0, activo: true
+                email: '', idCargo: 0, activo: true,
+                role: 'Empleado'
             });
         }
         setErrors({});
@@ -52,21 +61,26 @@ const EmpleadoModal = ({ show, handleClose, handleSave, empleadoToEdit }: Emplea
 
     // --- LOGIC ---
 
-    const loadCargos = async () => {
-        setLoadingCargos(true);
+    const loadData = async () => {
+        setLoadingData(true);
         try {
-            const data = await cargoService.getAll();
-            setCargos(data);
+            const [cargosData, rolesData] = await Promise.all([
+                cargoService.getAll(),
+                roleService.getAll()
+            ]);
+            setCargos(cargosData);
+            setRoles(rolesData);
         } catch (err) {
-            console.error('Error loading cargos:', err);
-            setApiError('No se pudieron cargar los cargos. Verifique el backend.');
+            console.error('Error loading data:', err);
+            setApiError('No se pudieron cargar los datos (Cargos/Roles).');
         } finally {
-            setLoadingCargos(false);
+            setLoadingData(false);
         }
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value, type } = e.target;
+        // Cast para manejar el checkbox correctamente
         const finalValue = type === 'checkbox' ? (e.target as HTMLInputElement).checked : value;
 
         setFormData(prev => ({
@@ -124,7 +138,8 @@ const EmpleadoModal = ({ show, handleClose, handleSave, empleadoToEdit }: Emplea
             cedula: formData.cedula?.trim(),
             email: formData.email?.trim(),
             telefono: formData.telefono?.trim() || null,
-            idCargo: Number(formData.idCargo)
+            idCargo: Number(formData.idCargo),
+            role: formData.role // Send selected role
         };
 
         try {
@@ -172,9 +187,9 @@ const EmpleadoModal = ({ show, handleClose, handleSave, empleadoToEdit }: Emplea
                 <Modal.Body>
                     {apiError && <Alert variant="danger">{apiError}</Alert>}
 
-                    {loadingCargos && (
+                    {loadingData && (
                         <div className="text-center mb-3">
-                            <Spinner animation="border" size="sm" /> <span className="text-muted ms-2">Cargando lista de cargos...</span>
+                            <Spinner animation="border" size="sm" /> <span className="text-muted ms-2">Cargando datos...</span>
                         </div>
                     )}
 
@@ -254,17 +269,40 @@ const EmpleadoModal = ({ show, handleClose, handleSave, empleadoToEdit }: Emplea
                             value={formData.idCargo || 0}
                             onChange={handleChange}
                             isInvalid={!!errors.idCargo}
-                            disabled={loadingCargos}
+                            disabled={loadingData}
                         >
                             <option value="0">Seleccione un cargo...</option>
                             {cargos.map(cargo => (
                                 <option key={cargo.idCargo} value={cargo.idCargo}>
-                                    {cargo.nombreCargo}
+                                    {cargo.nombreCargo} - ${cargo.salarioBase}
                                 </option>
                             ))}
                         </Form.Select>
                         <Form.Control.Feedback type="invalid">{errors.idCargo}</Form.Control.Feedback>
                     </Form.Group>
+
+                    {/* NEW ROLE SELECTION */}
+                    {!isEditMode && (
+                        <Form.Group className="mb-3">
+                            <Form.Label>Rol de Usuario <span className="text-muted small">(Para acceso al sistema)</span></Form.Label>
+                            <Form.Select
+                                name="role"
+                                value={formData.role || 'Empleado'}
+                                onChange={handleChange}
+                                disabled={loadingData}
+                            >
+                                <option value="" disabled>Seleccione un rol...</option>
+                                {roles.map(role => (
+                                    <option key={role.id} value={role.name}>
+                                        {role.name}
+                                    </option>
+                                ))}
+                            </Form.Select>
+                            <Form.Text className="text-muted">
+                                El rol define los permisos del usuario en la plataforma.
+                            </Form.Text>
+                        </Form.Group>
+                    )}
 
                     {isEditMode && (
                         <Form.Group className="mb-3 bg-light p-2 rounded">
