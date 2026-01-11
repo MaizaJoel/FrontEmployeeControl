@@ -119,6 +119,11 @@ const EmpleadoModal = ({ show, handleClose, handleSave, empleadoToEdit }: Emplea
 
         const dataToSend = {
             ...formData,
+            nombre: formData.nombre?.trim(),
+            apellido: formData.apellido?.trim(),
+            cedula: formData.cedula?.trim(),
+            email: formData.email?.trim(),
+            telefono: formData.telefono?.trim() || null,
             idCargo: Number(formData.idCargo)
         };
 
