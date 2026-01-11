@@ -214,6 +214,7 @@ h6 {
   font-weight: 800;
   background: linear-gradient(135deg, #434343 0%, #000000 100%);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
   line-height: 1;
 }
@@ -281,7 +282,7 @@ h6 {
   border-radius: var(--radius-md);
   font-weight: 500;
   transition: all var(--transition-fast);
-  border: none;
+  border: 1px solid transparent;
 }
 
 .btn:hover {

@@ -59,10 +59,11 @@ const MainLayout = () => {
                     <div className="d-md-none bg-dark text-white p-3 d-flex justify-content-between align-items-center shadow sticky-top">
                         <span className="fw-bold fs-5">{getConfig('NOMBRE_EMPRESA', 'RRHH System')}</span>
                         <button
-                            className="btn btn-outline-light btn-sm"
+                            className="btn btn-outline-light btn-sm border-1 d-flex align-items-center justify-content-center"
+                            style={{ width: '40px', height: '40px' }}
                             onClick={() => setShowMobileMenu(true)}
                         >
-                            <i className="bi bi-list fs-4"></i>
+                            <i className="bi bi-list fs-3"></i>
                         </button>
                     </div>
 
