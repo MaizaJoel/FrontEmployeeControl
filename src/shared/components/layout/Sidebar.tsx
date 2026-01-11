@@ -79,7 +79,7 @@ const Sidebar = ({ onClose, isCollapsed = false }: SidebarProps) => {
 
                     {hasPermission('Permissions.TimeClock.ViewHistory') && (
                         <NavLink to="/rrhh/fichajes" className={({ isActive }) => getNavLinkClass(isActive)} onClick={onClose} title="Registros Fichajes">
-                            <i className="bi bi-cash-coin fs-5"></i>
+                            <i className="bi bi-person-plus fs-5"></i>
                             {!isCollapsed && <span className="ms-3">Registros Fichajes</span>}
                         </NavLink>
                     )}

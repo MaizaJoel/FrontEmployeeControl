@@ -2,22 +2,17 @@ import { useState, useEffect, useRef } from 'react';
 import { Form, Card, Alert, Spinner } from 'react-bootstrap';
 import { fichajeService } from '../../../services/fichajeService';
 import { useConfig } from '../../../context/ConfigContext';
+import { useClock } from '../../../hooks/useClock';
 
 const Kiosco = () => {
     const [cedula, setCedula] = useState('');
-    const [hora, setHora] = useState(new Date());
+    const { formattedTime, formattedDate } = useClock();
     const [loading, setLoading] = useState(false);
     const [mensaje, setMensaje] = useState<{ tipo: 'success' | 'danger', texto: string } | null>(null);
     const inputRef = useRef<HTMLInputElement>(null);
     const { getConfig } = useConfig();
 
-    // 1. Reloj en tiempo real
-    useEffect(() => {
-        const timer = setInterval(() => setHora(new Date()), 1000);
-        return () => clearInterval(timer);
-    }, []);
-
-    // 2. Mantener el foco total
+    // 1. Mantener el foco total
     useEffect(() => {
         const focusInput = () => {
             if (!loading) inputRef.current?.focus();
@@ -28,7 +23,7 @@ const Kiosco = () => {
         return () => window.removeEventListener('click', focusInput);
     }, [loading, mensaje]);
 
-    // 3. Lógica central de Marcado
+    // 2. Lógica central de Marcado
     const procesarMarcado = async (idParaMarcar: string) => {
         if (!idParaMarcar.trim() || idParaMarcar.length < 10 || loading) return;
 
@@ -51,7 +46,7 @@ const Kiosco = () => {
         }
     };
 
-    // 4. Auto-disparo al llegar a 10 dígitos
+    // 3. Auto-disparo al llegar a 10 dígitos
     useEffect(() => {
         if (cedula.length === 10) {
             procesarMarcado(cedula);
@@ -78,10 +73,10 @@ const Kiosco = () => {
                     {/* RELOJ PRO */}
                     <div className="mb-4">
                         <div className="clock-text display-1 d-block mb-1">
-                            {hora.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}
+                            {formattedTime}
                         </div>
                         <div className="text-muted text-uppercase fw-semibold letter-spacing-widest">
-                            {hora.toLocaleDateString('es-EC', { weekday: 'long', day: 'numeric', month: 'long' })}
+                            {formattedDate}
                         </div>
                     </div>
 

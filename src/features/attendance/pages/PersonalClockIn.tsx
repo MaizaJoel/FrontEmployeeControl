@@ -1,20 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, Button, Alert, Spinner, Row, Col } from 'react-bootstrap';
 import { useAuth } from '../../../context/AuthContext';
 import { fichajeService } from '../../../services/fichajeService';
 import { useConfig } from '../../../context/ConfigContext';
 
+import { useClock } from '../../../hooks/useClock';
+
 const PersonalClockIn = () => {
     const { user } = useAuth();
     const { getConfig } = useConfig();
-    const [hora, setHora] = useState(new Date());
+    const { formattedTime, formattedDate } = useClock();
     const [loading, setLoading] = useState(false);
     const [mensaje, setMensaje] = useState<{ tipo: 'success' | 'danger', texto: string } | null>(null);
-
-    useEffect(() => {
-        const timer = setInterval(() => setHora(new Date()), 1000);
-        return () => clearInterval(timer);
-    }, []);
 
     const handleMarcar = async () => {
         if (!user?.username || loading) return;
@@ -50,10 +47,10 @@ const PersonalClockIn = () => {
                         <Card.Body className="p-5 text-center">
                             <div className="mb-4">
                                 <h1 className="display-3 fw-bold text-dark mb-1">
-                                    {hora.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}
+                                    {formattedTime}
                                 </h1>
                                 <div className="text-muted text-uppercase fw-semibold letter-spacing-widest">
-                                    {hora.toLocaleDateString('es-EC', { weekday: 'long', day: 'numeric', month: 'long' })}
+                                    {formattedDate}
                                 </div>
                             </div>
 
