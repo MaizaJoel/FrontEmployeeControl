@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Form, Button, Table, Card, Row, Col, Spinner, Alert, Badge } from 'react-bootstrap';
+import { nominaService } from '../../../services/nominaService';
 import { reporteService, ReporteNomina } from '../../../services/reporteService';
 import { empleadoService } from '../../../services/empleadoService';
 import { fichajeService } from '../../../services/fichajeService';
@@ -373,6 +374,29 @@ const Reportes = () => {
                     </div>
 
                     {/* TARJETAS DE RESUMEN */}
+                    {hasPermission('Permissions.Payroll.Manage') && (
+                        <div className="d-flex justify-content-end mb-3">
+                            <Button
+                                variant="outline-primary"
+                                onClick={async () => {
+                                    if (confirm(`¿Desea registrar este periodo como PAGADO? \nEsto marcará los adelantos como 'Descontado' y cerrará la nómina para ${getNombreEmpleado()}.`)) {
+                                        try {
+                                            await nominaService.generar(fechaInicio, fechaFin, [selectedEmpId]);
+                                            alert("Nómina registrada exitosamente.");
+                                            window.location.reload();
+                                        } catch (e: any) {
+                                            console.error(e);
+                                            const msg = e.response?.data || "Error al registrar pago.";
+                                            alert(typeof msg === 'string' ? msg : "Error al procesar la solicitud. Revise la consola.");
+                                        }
+                                    }
+                                }}
+                            >
+                                Registrar Pago / Cerrar Periodo
+                            </Button>
+                        </div>
+                    )}
+
                     <Row className="mb-4 text-center">
                         <Col md={4}>
                             <Card className="border-success h-100">

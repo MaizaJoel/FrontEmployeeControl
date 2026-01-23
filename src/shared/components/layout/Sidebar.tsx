@@ -15,6 +15,7 @@ const Sidebar = ({ onClose, isCollapsed = false }: SidebarProps) => {
     // Show Admin section if has ANY of the main administrative permissions
     const showAdminSection = hasPermission('Permissions.Employees.View') ||
         hasPermission('Permissions.Reports.View') ||
+        hasPermission('Permissions.Payroll.View') ||
         hasPermission('Permissions.Settings.View');
     const [showPasswordModal, setShowPasswordModal] = useState(false);
 
@@ -111,6 +112,13 @@ const Sidebar = ({ onClose, isCollapsed = false }: SidebarProps) => {
                                 <NavLink to="/rrhh/reportes" className={({ isActive }) => getNavLinkClass(isActive)} onClick={onClose} title="Reportes">
                                     <i className="bi bi-file-earmark-bar-graph fs-5"></i>
                                     {!isCollapsed && <span className="ms-3">Reportes</span>}
+                                </NavLink>
+                            )}
+
+                            {hasPermission('Permissions.Payroll.View') && (
+                                <NavLink to="/rrhh/nominas" className={({ isActive }) => getNavLinkClass(isActive)} onClick={onClose} title="Historial Pagos">
+                                    <i className="bi bi-clock-history fs-5"></i>
+                                    {!isCollapsed && <span className="ms-3">Historial Pagos</span>}
                                 </NavLink>
                             )}
 

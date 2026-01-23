@@ -16,6 +16,8 @@ import { useAuth } from './context/AuthContext';
 import ConfiguracionesGeneral from './features/configuration/pages/GeneralConfig';
 import ConfiguracionesFeriados from './features/configuration/pages/HolidaysConfig';
 import PersonalClockIn from './features/attendance/pages/PersonalClockIn';
+import NominaHistory from './features/nominas/NominaHistory';
+import NominaGenerator from './features/nominas/NominaGenerator';
 
 // Imports for Employee Tabs
 import Empleados from './features/employees/pages/EmployeeList';
@@ -89,6 +91,12 @@ function App() {
                                 {/* Reportes guarded by Reports.View */}
                                 <Route element={<PermissionGuard permission="Permissions.Reports.View" />}>
                                     <Route path="reportes" element={<Reportes />} />
+                                    <Route element={<PermissionGuard permission="Permissions.Payroll.View" />}>
+                                        <Route path="nominas" element={<NominaHistory />} />
+                                        <Route element={<PermissionGuard permission="Permissions.Payroll.Manage" />}>
+                                            <Route path="nominas/generar" element={<NominaGenerator />} />
+                                        </Route>
+                                    </Route>
                                 </Route>
                             </Route>
 

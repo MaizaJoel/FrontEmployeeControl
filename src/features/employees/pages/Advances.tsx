@@ -75,6 +75,7 @@ const Adelantos = () => {
             case 'Aprobado': return 'success';
             case 'Rechazado': return 'danger';
             case 'Pagado': return 'dark';
+            case 'Descontado': return 'info';
             default: return 'warning';
         }
     };
@@ -112,30 +113,47 @@ const Adelantos = () => {
 
                                     <td className="text-end">
 
-                                        {/* Solo permitimos acciones si NO está Pagado */}
-                                        {item.estado !== 'Pagado' && (
+                                        {/* SI ESTÁ DESCONTADO: Bloqueamos todo y explicamos por qué */}
+                                        {item.estado === 'Descontado' ? (
+                                            <span className="text-muted small italic">
+                                                <i className="bi bi-lock-fill me-1"></i>
+                                                Deducido en nómina
+                                            </span>
+                                        ) : (
                                             <>
-                                                {/* Aprobar: Solo si no está aprobado aún */}
-                                                {item.estado !== 'Aprobado' && (
-                                                    <Button variant="outline-success" size="sm" className="me-1" title="Aprobar Adelanto"
-                                                        onClick={() => handleCambiarEstado(item.idAdelanto, 'Aprobado')}>✓</Button>
+                                                {/* Solo permitimos acciones si NO está Pagado ni Descontado */}
+                                                {item.estado !== 'Pagado' && (
+                                                    <>
+                                                        {/* Aprobar: Solo si no está aprobado aún */}
+                                                        {item.estado !== 'Aprobado' && (
+                                                            <Button variant="outline-success" size="sm" className="me-1" title="Aprobar Adelanto"
+                                                                onClick={() => handleCambiarEstado(item.idAdelanto, 'Aprobado')}>✓</Button>
+                                                        )}
+
+                                                        {/* Rechazar: Siempre visible (para cancelar aprobaciones) */}
+                                                        {item.estado !== 'Rechazado' && (
+                                                            <Button variant="outline-secondary" size="sm" className="me-1" title="Rechazar / Cancelar"
+                                                                onClick={() => handleCambiarEstado(item.idAdelanto, 'Rechazado')}>✕</Button>
+                                                        )}
+
+                                                        {/* Editar: Siempre visible (corregir montos) */}
+                                                        <Button variant="outline-primary" size="sm" className="me-1" title="Editar Adelanto"
+                                                            onClick={() => handleEdit(item)}>✏️</Button>
+
+                                                        {/* AHORA: Mostramos el botón si es Solicitado O Rechazado */}
+                                                        {(item.estado === 'Solicitado' || item.estado === 'Rechazado') && (
+                                                            <Button variant="outline-danger" size="sm"
+                                                                onClick={() => handleDelete(item.idAdelanto)}
+                                                                title="Eliminar adelanto">🗑️</Button>
+                                                        )}
+                                                    </>
                                                 )}
 
-                                                {/* Rechazar: Siempre visible (para cancelar aprobaciones) */}
-                                                {item.estado !== 'Rechazado' && (
-                                                    <Button variant="outline-secondary" size="sm" className="me-1" title="Rechazar / Cancelar"
-                                                        onClick={() => handleCambiarEstado(item.idAdelanto, 'Rechazado')}>✕</Button>
-                                                )}
-
-                                                {/* Editar: Siempre visible (corregir montos) */}
-                                                <Button variant="outline-primary" size="sm" className="me-1" title="Editar Adelanto"
-                                                    onClick={() => handleEdit(item)}>✏️</Button>
-
-                                                {/* AHORA: Mostramos el botón si es Solicitado O Rechazado */}
-                                                {(item.estado === 'Solicitado' || item.estado === 'Rechazado') && (
-                                                    <Button variant="outline-danger" size="sm"
-                                                        onClick={() => handleDelete(item.idAdelanto)}
-                                                        title="Eliminar adelanto">🗑️</Button>
+                                                {/* Si está Pagado pero NO Descontado aún, permitimos registrar el descuento manual o simplemente informamos */}
+                                                {item.estado === 'Pagado' && (
+                                                    <span className="text-muted small">
+                                                        Pendiente de deducción
+                                                    </span>
                                                 )}
                                             </>
                                         )}
