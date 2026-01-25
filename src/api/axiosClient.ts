@@ -34,6 +34,11 @@ axiosClient.interceptors.response.use(
     (error) => {
 
         if (error.response && error.response.status === 401) {
+            // Prevent redirect/refresh if the error comes from the login endpoint
+            if (error.config.url.includes('/Auth/login')) {
+                return Promise.reject(error);
+            }
+
             localStorage.removeItem('token');
             // Avoid redirecting to login if we are in the public kiosk
             if (!window.location.pathname.startsWith('/kiosko')) {
