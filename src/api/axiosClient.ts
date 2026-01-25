@@ -41,7 +41,7 @@ axiosClient.interceptors.response.use(
 
             localStorage.removeItem('token');
             // Avoid redirecting to login if we are in the public kiosk
-            if (!window.location.pathname.startsWith('/kiosko')) {
+            if (!window.location.pathname.startsWith('/kiosco')) {
                 window.location.href = '/';
             }
         }
