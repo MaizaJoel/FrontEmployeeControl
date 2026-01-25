@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Alert, Spinner, InputGroup, Button } from 'react-bootstrap';
 import axiosClient from '../../../api/axiosClient';
 import { useAuth } from '../../../context/AuthContext';
@@ -93,6 +93,9 @@ const Login = () => {
                                 <i className={`bi bi-eye${showPassword ? '-slash' : ''}`}></i>
                             </Button>
                         </InputGroup>
+                        <div className="d-flex justify-content-end mt-1">
+                            <Link to="/forgot-password" style={{ fontSize: '0.9rem', textDecoration: 'none' }}>¿Olvidaste tu contraseña?</Link>
+                        </div>
                     </div>
                     <button
                         type="submit"

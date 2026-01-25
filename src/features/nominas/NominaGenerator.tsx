@@ -22,14 +22,7 @@ const NominaGenerator = () => {
         setError(null);
         setLoading(true);
         try {
-            // Check if period exists
-            const check = await nominaService.checkPeriod(startDate, endDate);
-            if (check.exists) {
-                if (!window.confirm(`ATENCIÓN: Ya existe una nómina para el periodo ${startDate} - ${endDate} (Creada el ${check.nomina?.fechaGeneracion}). ¿Deseas continuar de todas formas y crear otra paralela?`)) {
-                    setLoading(false);
-                    return;
-                }
-            }
+
 
             const data = await nominaService.preview(startDate, endDate);
             setPreviewData(data);
@@ -77,8 +70,13 @@ const NominaGenerator = () => {
             navigate('/rrhh/nominas');
         } catch (err: any) {
             console.error(err);
-            const msg = err.response?.data || "Error al guardar la nómina.";
-            setError(typeof msg === 'string' ? msg : "Error al procesar la solicitud.");
+            // Si el backend devuelve un string directo o un objeto con message
+            let msg = "Error al guardar la nómina.";
+            if (err.response?.data) {
+                if (typeof err.response.data === 'string') msg = err.response.data;
+                else if (typeof err.response.data.message === 'string') msg = err.response.data.message;
+            }
+            setError(msg);
         } finally {
             setLoading(false);
         }

@@ -35,6 +35,11 @@ const ConfiguracionesPage = () => {
                         Tasas y Horarios
                     </Nav.Link>
                 </Nav.Item>
+                <Nav.Item>
+                    <Nav.Link as={NavLink} to="email">
+                        Configuración Email
+                    </Nav.Link>
+                </Nav.Item>
             </Nav>
 
             <div className="bg-white p-3 border border-top-0 rounded-bottom shadow-sm" style={{ minHeight: '400px' }}>

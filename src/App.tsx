@@ -1,5 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import Login from './features/auth/pages/Login';
+import ForgotPassword from './features/auth/pages/ForgotPassword';
+import ResetPassword from './features/auth/pages/ResetPassword';
 import Dashboard from './pages/dashboard/Dashboard'; // Keeping Dashboard as page for now if not moved
 import EmployeeManagement from './features/employees/pages/EmployeeManagement';
 import Adelantos from './features/employees/pages/Advances'; // Assuming moved/renamed or just generic
@@ -15,6 +17,7 @@ import ConfiguracionTasas from './features/configuration/pages/RatesConfig';
 import { useAuth } from './context/AuthContext';
 import ConfiguracionesGeneral from './features/configuration/pages/GeneralConfig';
 import ConfiguracionesFeriados from './features/configuration/pages/HolidaysConfig';
+import EmailConfig from './features/configuration/pages/EmailConfig';
 import PersonalClockIn from './features/attendance/pages/PersonalClockIn';
 import NominaHistory from './features/nominas/NominaHistory';
 import NominaGenerator from './features/nominas/NominaGenerator';
@@ -55,6 +58,8 @@ function App() {
                 <Routes>
                     <Route element={<RutaPublica />}>
                         <Route path="/" element={<Login />} />
+                        <Route path="/forgot-password" element={<ForgotPassword />} />
+                        <Route path="/reset-password" element={<ResetPassword />} />
                     </Route>
 
                     <Route element={<KioscoLayout />}>
@@ -107,6 +112,7 @@ function App() {
                                     <Route path="general" element={<ConfiguracionesGeneral />} />
                                     <Route path="feriados" element={<ConfiguracionesFeriados />} />
                                     <Route path="tasas" element={<ConfiguracionTasas />} />
+                                    <Route path="email" element={<EmailConfig />} />
                                 </Route>
                             </Route>
                         </Route>
