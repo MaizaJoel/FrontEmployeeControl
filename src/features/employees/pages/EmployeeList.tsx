@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Button, Table, Badge, Spinner, Alert, Form, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import { empleadoService } from '../../../services/empleadoService';
+import { authService } from '../../../services/authService';
 import { Empleado } from '../../../types';
 import EmpleadoModal from '../components/EmpleadoModal';
 import { useDataFilter } from '../../../hooks/useDataFilter';
@@ -15,6 +16,7 @@ const Empleados = () => {
     const [error, setError] = useState('');
     const [showModal, setShowModal] = useState(false);
     const [editingEmpleado, setEditingEmpleado] = useState<Empleado | null>(null);
+    const [resettingPassword, setResettingPassword] = useState<number | null>(null);
 
     const { searchQuery, setSearchQuery, filteredData } = useDataFilter(empleados, ['nombre', 'apellido', 'cedula', 'email']);
 
@@ -59,6 +61,20 @@ const Empleados = () => {
             loadEmpleados();
         } catch (err) {
             alert(`Error al ${action.toLowerCase()} el empleado.`);
+        }
+    };
+
+    const handleResetPassword = async (emp: Empleado) => {
+        if (!window.confirm(`¿Enviar contraseña temporal a ${emp.nombre} ${emp.apellido} (${emp.email})?`)) return;
+
+        setResettingPassword(emp.idEmpleado);
+        try {
+            await authService.adminResetPassword(emp.email);
+            alert(`Contraseña temporal enviada a ${emp.email}`);
+        } catch (err) {
+            alert('Error al restablecer la contraseña.');
+        } finally {
+            setResettingPassword(null);
         }
     };
 
@@ -146,6 +162,22 @@ const Empleados = () => {
                                                     title="Editar"
                                                     onClick={() => handleEdit(emp)}
                                                 > ✏️
+                                                </Button>
+                                            </OverlayTrigger>
+                                        )}
+                                        {/* Password Reset Icon with Tooltip */}
+                                        {hasPermission('Permissions.Employees.ResetPassword') && (
+                                            <OverlayTrigger
+                                                placement="top"
+                                                overlay={<Tooltip>Restablecer Contraseña</Tooltip>}
+                                            >
+                                                <Button
+                                                    variant="link"
+                                                    className="text-warning p-0"
+                                                    title="Restablecer Contraseña"
+                                                    onClick={() => handleResetPassword(emp)}
+                                                    disabled={resettingPassword === emp.idEmpleado}
+                                                > {resettingPassword === emp.idEmpleado ? '⏳' : '🔑'}
                                                 </Button>
                                             </OverlayTrigger>
                                         )}
