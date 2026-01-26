@@ -69,9 +69,15 @@ const Empleados = () => {
 
         setResettingPassword(emp.idEmpleado);
         try {
-            await authService.adminResetPassword(emp.email);
-            alert(`Contraseña temporal enviada a ${emp.email}`);
-        } catch (err) {
+            // response data: { message, tempPassword?, warning? }
+            const result = await authService.adminResetPassword(emp.email);
+
+            if (result.warning) {
+                alert(`⚠️ La contraseña se restableció, pero hubo un error enviando el correo:\n${result.warning}\n\nLa contraseña temporal es: ${result.tempPassword}`);
+            } else {
+                alert(`✅ Contraseña temporal enviada a ${emp.email}`);
+            }
+        } catch (err: any) {
             alert('Error al restablecer la contraseña.');
         } finally {
             setResettingPassword(null);
