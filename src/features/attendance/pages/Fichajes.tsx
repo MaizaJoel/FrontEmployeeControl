@@ -72,9 +72,13 @@ const Fichajes = () => {
     // --- Handlers para Edición Individual ---
     const handleOpenEdit = (log: FichajeLog) => {
         setEditingFichaje(log);
-        const dt = new Date(log.timestampUtc);
-        setFormFecha(dt.toLocaleDateString('en-CA'));
-        setFormHora(dt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }));
+        // IMPORTANTE: El backend ahora envía la fecha en "Hora Empresa" (ej: "2026-01-26T08:30:00")
+        // Parseamos directamente la cadena sin usar new Date() que añadiría offset del navegador
+        const dateTimeParts = log.timestampUtc.split('T');
+        const datePart = dateTimeParts[0]; // "2026-01-26"
+        const timePart = dateTimeParts[1]?.substring(0, 5) || '00:00'; // "08:30"
+        setFormFecha(datePart);
+        setFormHora(timePart);
         setFormTipo(log.tipoEvento);
         setShowEditModal(true);
     };
@@ -105,8 +109,14 @@ const Fichajes = () => {
         } catch (e) { alert("Error al eliminar"); }
     };
 
+    // El backend ahora envía la fecha en formato "Hora Empresa" (ej: "2026-01-26T08:30:00")
+    // Solo formateamos para mostrar, sin conversiones de timezone
     const formatDate = (isoString: string) => {
-        return new Date(isoString).toLocaleString('es-EC');
+        // Parseamos la fecha/hora directamente de la cadena
+        const [datePart, timePart] = isoString.split('T');
+        const [year, month, day] = datePart.split('-');
+        const time = timePart?.substring(0, 5) || '00:00';
+        return `${day}/${month}/${year} ${time}`;
     };
 
     return (
