@@ -18,6 +18,7 @@ const AdelantoModal = ({ show, handleClose, handleSave, adelantoToEdit }: Props)
 
     const [monto, setMonto] = useState(0);
     const [descripcion, setDescripcion] = useState('');
+    const [fechaSolicitud, setFechaSolicitud] = useState(new Date().toISOString().split('T')[0]);
     const [idEmpleado, setIdEmpleado] = useState<number | null>(null);
     const [empleados, setEmpleados] = useState<Empleado[]>([]);
     const [error, setError] = useState('');
@@ -32,10 +33,12 @@ const AdelantoModal = ({ show, handleClose, handleSave, adelantoToEdit }: Props)
         if (adelantoToEdit) {
             setMonto(adelantoToEdit.monto);
             setDescripcion(adelantoToEdit.descripcion);
+            setFechaSolicitud(adelantoToEdit.fechaSolicitud.split('T')[0]);
             setIdEmpleado(adelantoToEdit.idEmpleado);
         } else {
             setMonto(0);
             setDescripcion('');
+            setFechaSolicitud(new Date().toISOString().split('T')[0]);
             setIdEmpleado(null);
         }
         setError('');
@@ -62,7 +65,8 @@ const AdelantoModal = ({ show, handleClose, handleSave, adelantoToEdit }: Props)
         handleSave({
             idEmpleado: idEmpleado,
             monto,
-            descripcion
+            descripcion,
+            fechaSolicitud
         });
     };
 
@@ -98,6 +102,16 @@ const AdelantoModal = ({ show, handleClose, handleSave, adelantoToEdit }: Props)
                             step="0.01"
                             value={monto}
                             onChange={(e) => setMonto(parseFloat(e.target.value))}
+                            required
+                        />
+                    </Form.Group>
+
+                    <Form.Group className="mb-3">
+                        <Form.Label>Fecha de Solicitud</Form.Label>
+                        <Form.Control
+                            type="date"
+                            value={fechaSolicitud}
+                            onChange={(e) => setFechaSolicitud(e.target.value)}
                             required
                         />
                     </Form.Group>

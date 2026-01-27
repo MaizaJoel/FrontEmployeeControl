@@ -15,6 +15,7 @@ export interface CreateAdelanto {
     idEmpleado: number;
     monto: number;
     descripcion: string;
+    fechaSolicitud?: string; // "yyyy-MM-dd"
 }
 
 export const adelantoService = {
