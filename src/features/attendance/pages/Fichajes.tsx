@@ -80,7 +80,9 @@ const Fichajes = () => {
     const handleSaveEdit = async () => {
         if (!editingFichaje) return;
         try {
-            const fechaHoraLocal = new Date(`${formFecha}T${formHora}:00`).toISOString();
+            // FIXED: Enviar la hora nominal (Local) tal cual, sin convertir a UTC aquí.
+            // El backend leerá "08:30" y usará la Zona Horaria de la Empresa para calcular el UTC real.
+            const fechaHoraLocal = `${formFecha}T${formHora}:00`;
             await fichajeService.update(editingFichaje.idFichaje, {
                 idEmpleado: editingFichaje.idEmpleado,
                 fechaHoraLocal: fechaHoraLocal,
