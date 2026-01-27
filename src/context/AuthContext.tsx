@@ -1,11 +1,12 @@
 import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { jwtDecode } from "jwt-decode";
 
-// Define the permissions mapping here for fallback (matches backend AppPermissions.cs)
+import { AppRoles } from '../constants/roles';
+
 // Define the permissions mapping here for fallback (matches backend AppPermissions.cs)
 const DEFAULT_ROLE_PERMISSIONS: Record<string, string[]> = {
-    Admin: ['ALL'], // Special keyword for full access
-    Asistente: [
+    [AppRoles.Admin]: ['ALL'], // Special keyword for full access
+    [AppRoles.Asistente]: [
         'Permissions.Dashboard.View',
         'Permissions.Employees.View',
         'Permissions.Employees.Create',
@@ -19,13 +20,7 @@ const DEFAULT_ROLE_PERMISSIONS: Record<string, string[]> = {
         'Permissions.Reports.View',
         'Permissions.Holidays.View'
     ],
-    Empleado: [ // 'Empleado' matches backend role name often used (or 'Employee'?) Backend says 'Employee', let's support both or check
-        'Permissions.Dashboard.View',
-        'Permissions.MyData.View',
-        'Permissions.Advances.Request',
-        'Permissions.TimeClock.Mark'
-    ],
-    Employee: [ // Duplicate for safety if role name varies
+    [AppRoles.Employee]: [
         'Permissions.Dashboard.View',
         'Permissions.MyData.View',
         'Permissions.Advances.Request',
@@ -119,7 +114,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
                 if (decoded.exp * 1000 > Date.now()) {
                     // Handle role being string or array
                     const rawRole = decoded.role || decoded[CLAIM_ROLE];
-                    const userRole = Array.isArray(rawRole) ? rawRole[0] : rawRole || 'Empleado';
+                    const userRole = Array.isArray(rawRole) ? rawRole[0] : rawRole || AppRoles.Employee;
 
                     // Extract accurate username (Prioritize Cedula, then generic name, then fallback)
                     const uniqueName = decoded.Cedula || decoded.unique_name || decoded.sub || decoded[CLAIM_NAME] || 'User';
@@ -150,7 +145,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         try {
             const decoded = jwtDecode<DecodedToken>(token);
             const rawRole = decoded.role || decoded[CLAIM_ROLE];
-            const userRole = Array.isArray(rawRole) ? rawRole[0] : rawRole || 'Empleado';
+            const userRole = Array.isArray(rawRole) ? rawRole[0] : rawRole || AppRoles.Employee;
 
             const uniqueName = decoded.Cedula || decoded.unique_name || decoded.sub || decoded[CLAIM_NAME] || 'User';
 
@@ -176,7 +171,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
     const hasPermission = (permission: string): boolean => {
         if (!user) return false;
-        if (user.role === 'Admin' || user.permissions.includes('ALL')) return true;
+        if (user.role === AppRoles.Admin || user.permissions.includes('ALL')) return true;
         return user.permissions.includes(permission);
     };
 

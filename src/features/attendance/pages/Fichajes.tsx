@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Table, Spinner, Badge, Card, Alert, Button, Form, Row, Col, Modal } from 'react-bootstrap';
-import { fichajeService, FichajeLog } from '../../../services/fichajeService';
+import { fichajeService } from '../../../services/fichajeService';
+import { FichajeLog } from '../../../types';
+import { EventTypes } from '../../../constants/events';
 import { empleadoService } from '../../../services/empleadoService';
 import { Empleado } from '../../../types';
 import JornadaModal from '../components/FichajesJornadaModal';
@@ -163,7 +165,7 @@ const Fichajes = () => {
                                     <td className="fw-bold">{formatDate(log.timestampUtc)}</td>
                                     <td>{log.nombreEmpleado}</td>
                                     <td>
-                                        <Badge bg={log.tipoEvento === 'ENTRADA' ? 'success' : log.tipoEvento === 'SALIDA' ? 'danger' : 'warning'}>
+                                        <Badge bg={log.tipoEvento === EventTypes.ENTRADA ? 'success' : log.tipoEvento === EventTypes.SALIDA ? 'danger' : 'warning'}>
                                             {log.tipoEvento}
                                         </Badge>
                                     </td>
@@ -201,10 +203,10 @@ const Fichajes = () => {
                         <Col><Form.Control type="time" value={formHora} onChange={e => setFormHora(e.target.value)} /></Col>
                     </Row>
                     <Form.Select className="mt-3" value={formTipo} onChange={e => setFormTipo(e.target.value)}>
-                        <option value="ENTRADA">ENTRADA</option>
-                        <option value="INICIO_ALMUERZO">INICIO_ALMUERZO</option>
-                        <option value="FIN_ALMUERZO">FIN_ALMUERZO</option>
-                        <option value="SALIDA">SALIDA</option>
+                        <option value={EventTypes.ENTRADA}>{EventTypes.ENTRADA}</option>
+                        <option value={EventTypes.INICIO_ALMUERZO}>{EventTypes.INICIO_ALMUERZO}</option>
+                        <option value={EventTypes.FIN_ALMUERZO}>{EventTypes.FIN_ALMUERZO}</option>
+                        <option value={EventTypes.SALIDA}>{EventTypes.SALIDA}</option>
                     </Form.Select>
                 </Modal.Body>
                 <Modal.Footer>

@@ -1,0 +1,6 @@
+export const EventTypes = {
+    ENTRADA: 'ENTRADA',
+    SALIDA: 'SALIDA',
+    INICIO_ALMUERZO: 'INICIO_ALMUERZO',
+    FIN_ALMUERZO: 'FIN_ALMUERZO'
+};
