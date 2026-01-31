@@ -2,8 +2,12 @@ import { useEffect, useState } from 'react';
 import { Button, Table, Alert, Spinner } from 'react-bootstrap';
 import { roleService, Role } from '../../../services/roleService';
 import RoleModal from '../components/roles/RoleModal';
+import { getRoleDisplayName } from '../../../utils/textUtils';
 import PermissionsModal from '../components/roles/PermissionsModal';
 import { useAuth } from '../../../context/AuthContext';
+import ConfirmModal from '../../../shared/components/ui/ConfirmModal';
+import Toast from '../../../shared/components/ui/Toast';
+import NotificationModal from '../../../shared/components/ui/NotificationModal';
 
 const Roles = () => {
     const { hasPermission } = useAuth();
@@ -17,6 +21,28 @@ const Roles = () => {
     // Estado: Gestionar Permisos
     const [showPermisosModal, setShowPermisosModal] = useState(false);
     const [selectedRole, setSelectedRole] = useState<{ id: string, name: string } | null>(null);
+
+    // Estado para ConfirmModal
+    const [confirmModal, setConfirmModal] = useState<{
+        show: boolean;
+        title: string;
+        message: string;
+        variant: 'primary' | 'danger' | 'warning';
+        onConfirm: () => void;
+    }>({ show: false, title: '', message: '', variant: 'danger', onConfirm: () => { } });
+
+    // Estado para Toast
+    const [toast, setToast] = useState<{ show: boolean; message: string; variant: 'success' | 'danger' | 'warning' | 'info' }>({
+        show: false, message: '', variant: 'success'
+    });
+
+    // Estado para NotificationModal
+    const [notification, setNotification] = useState<{
+        show: boolean;
+        title: string;
+        message: string;
+        variant: 'success' | 'danger' | 'warning' | 'info';
+    }>({ show: false, title: '', message: '', variant: 'warning' });
 
     useEffect(() => { loadRoles(); }, []);
 
@@ -38,24 +64,39 @@ const Roles = () => {
             await roleService.create(data);
             setShowCreateModal(false);
             loadRoles();
+            setToast({ show: true, message: 'Rol creado correctamente.', variant: 'success' });
         } catch (err: any) {
-            alert('Error al crear: ' + (err.response?.data || err.message));
+            setToast({ show: true, message: 'Error al crear: ' + (err.response?.data || err.message), variant: 'danger' });
         }
     };
 
-    const handleDelete = async (id: string, name: string) => {
+    const handleDelete = (id: string, name: string) => {
         if (name === 'Admin' || name === 'Employee') {
-            alert('No se pueden eliminar los roles del sistema.');
+            setNotification({
+                show: true,
+                title: 'Acción No Permitida',
+                message: 'No se pueden eliminar los roles del sistema.',
+                variant: 'warning'
+            });
             return;
         }
-        if (!confirm(`¿Eliminar rol ${name}?`)) return;
 
-        try {
-            await roleService.delete(id);
-            loadRoles();
-        } catch (err) {
-            alert('Error al eliminar rol.');
-        }
+        setConfirmModal({
+            show: true,
+            title: 'Eliminar Rol',
+            message: `¿Eliminar rol ${getRoleDisplayName(name)}?`,
+            variant: 'danger',
+            onConfirm: async () => {
+                setConfirmModal(prev => ({ ...prev, show: false }));
+                try {
+                    await roleService.delete(id);
+                    loadRoles();
+                    setToast({ show: true, message: 'Rol eliminado correctamente.', variant: 'success' });
+                } catch (err) {
+                    setToast({ show: true, message: 'Error al eliminar rol.', variant: 'danger' });
+                }
+            }
+        });
     };
 
     const handleOpenPermisos = (role: Role) => {
@@ -92,7 +133,7 @@ const Roles = () => {
                             {roles.map((r) => (
                                 <tr key={r.id}>
                                     <td><small className="text-muted text-truncate d-block" style={{ maxWidth: '150px' }}>{r.id}</small></td>
-                                    <td className="fw-bold">{r.name}</td>
+                                    <td className="fw-bold">{getRoleDisplayName(r.name)}</td>
                                     <td className="text-end">
                                         {/* Botón Permisos */}
                                         {hasPermission('Permissions.Roles.Manage') && (
@@ -135,6 +176,33 @@ const Roles = () => {
                 handleClose={() => setShowPermisosModal(false)}
                 roleId={selectedRole?.id || null}
                 roleName={selectedRole?.name || ''}
+            />
+
+            {/* Modal de confirmación */}
+            <ConfirmModal
+                show={confirmModal.show}
+                title={confirmModal.title}
+                message={confirmModal.message}
+                variant={confirmModal.variant}
+                onConfirm={confirmModal.onConfirm}
+                onCancel={() => setConfirmModal(prev => ({ ...prev, show: false }))}
+            />
+
+            {/* Modal notificación */}
+            <NotificationModal
+                show={notification.show}
+                title={notification.title}
+                message={notification.message}
+                variant={notification.variant}
+                onClose={() => setNotification(prev => ({ ...prev, show: false }))}
+            />
+
+            {/* Toast para mensajes */}
+            <Toast
+                show={toast.show}
+                message={toast.message}
+                variant={toast.variant}
+                onClose={() => setToast(prev => ({ ...prev, show: false }))}
             />
         </div>
     );

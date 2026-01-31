@@ -3,6 +3,7 @@ import { useAuth } from '../../../context/AuthContext';
 import { useState, useEffect } from 'react';
 import { useConfig } from '../../../context/ConfigContext';
 import ChangePasswordModal from '../../../features/auth/components/ChangePasswordModal';
+import ConfirmModal from '../ui/ConfirmModal';
 
 interface SidebarProps {
     onClose?: () => void;
@@ -93,11 +94,15 @@ const Sidebar = ({ onClose, isCollapsed = false }: SidebarProps) => {
         hasPermission('Permissions.TimeClock.ViewHistory');
 
     const [showPasswordModal, setShowPasswordModal] = useState(false);
+    const [showLogoutModal, setShowLogoutModal] = useState(false);
 
     const handleLogout = () => {
-        if (window.confirm('¿Cerrar sesión?')) {
-            logout();
-        }
+        setShowLogoutModal(true);
+    };
+
+    const confirmLogout = () => {
+        setShowLogoutModal(false);
+        logout();
     };
 
     const getNavLinkClass = (isActive: boolean) => {
@@ -323,6 +328,15 @@ const Sidebar = ({ onClose, isCollapsed = false }: SidebarProps) => {
             <ChangePasswordModal
                 show={showPasswordModal}
                 handleClose={() => setShowPasswordModal(false)}
+            />
+            <ConfirmModal
+                show={showLogoutModal}
+                title="Cerrar Sesión"
+                message="¿Estás seguro de que deseas cerrar sesión?"
+                variant="warning"
+                confirmText="Cerrar Sesión"
+                onConfirm={confirmLogout}
+                onCancel={() => setShowLogoutModal(false)}
             />
         </div>
     );

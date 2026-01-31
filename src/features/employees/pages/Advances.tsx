@@ -3,6 +3,8 @@ import { Button, Table, Badge, Spinner } from 'react-bootstrap';
 import { adelantoService, Adelanto, CreateAdelanto } from '../../../services/adelantoService';
 import AdelantoModal from '../components/adelantos/AdelantoModal';
 import { useAuth } from '../../../context/AuthContext';
+import ConfirmModal from '../../../shared/components/ui/ConfirmModal';
+import Toast from '../../../shared/components/ui/Toast';
 
 const Adelantos = () => {
     const { hasPermission } = useAuth();
@@ -13,6 +15,20 @@ const Adelantos = () => {
 
     const [showModal, setShowModal] = useState(false);
     const [editingAdelanto, setEditingAdelanto] = useState<Adelanto | null>(null);
+
+    // Estado para ConfirmModal
+    const [confirmModal, setConfirmModal] = useState<{
+        show: boolean;
+        title: string;
+        message: string;
+        variant: 'primary' | 'danger' | 'warning';
+        onConfirm: () => void;
+    }>({ show: false, title: '', message: '', variant: 'warning', onConfirm: () => { } });
+
+    // Estado para Toast
+    const [toast, setToast] = useState<{ show: boolean; message: string; variant: 'success' | 'danger' | 'warning' | 'info' }>({
+        show: false, message: '', variant: 'success'
+    });
 
     useEffect(() => { loadData(); }, []);
 
@@ -39,35 +55,71 @@ const Adelantos = () => {
     };
 
     const handleSave = async (data: CreateAdelanto) => {
-        if (editingAdelanto) {
-            await adelantoService.update(editingAdelanto.idAdelanto, data);
-        } else {
-            await adelantoService.create(data);
-        }
-        setShowModal(false);
-        loadData();
-    };
-
-    const handleCambiarEstado = async (id: number, nuevoEstado: string) => {
-        // Si ya está en ese estado, no hacemos nada
-        if (!confirm(`¿Cambiar estado a: ${nuevoEstado}?`)) return;
         try {
-            await adelantoService.cambiarEstado(id, nuevoEstado);
+            if (editingAdelanto) {
+                await adelantoService.update(editingAdelanto.idAdelanto, data);
+            } else {
+                await adelantoService.create(data);
+            }
+            setShowModal(false);
             loadData();
-        } catch (err) {
-            alert('Error al cambiar el estado.');
-        }
-    };
-
-    const handleDelete = async (id: number) => {
-        if (!confirm("¿Eliminar esta solicitud permanentemente?")) return;
-        try {
-            await adelantoService.delete(id);
-            loadData();
+            setToast({ show: true, message: 'Adelanto guardado correctamente.', variant: 'success' });
         } catch (err: any) {
-            const msg = err.response?.data?.Message || err.response?.data?.message || 'No se pudo eliminar.';
-            alert(`Error: ${msg}`);
+            // Manejar errores de validación del backend
+            const errorData = err.response?.data;
+            let msg = 'Error al guardar el adelanto.';
+
+            if (errorData?.errors) {
+                // Extraer mensajes de validación
+                const validationErrors = Object.values(errorData.errors).flat().join(', ');
+                msg = validationErrors || msg;
+            } else if (typeof errorData === 'string') {
+                msg = errorData;
+            } else if (errorData?.message) {
+                msg = errorData.message;
+            }
+
+            setToast({ show: true, message: msg, variant: 'danger' });
         }
+    };
+
+    const handleCambiarEstado = (id: number, nuevoEstado: string) => {
+        setConfirmModal({
+            show: true,
+            title: 'Cambiar Estado',
+            message: `¿Cambiar estado a: ${nuevoEstado}?`,
+            variant: 'warning',
+            onConfirm: async () => {
+                setConfirmModal(prev => ({ ...prev, show: false }));
+                try {
+                    await adelantoService.cambiarEstado(id, nuevoEstado);
+                    loadData();
+                    setToast({ show: true, message: `Estado cambiado a ${nuevoEstado}.`, variant: 'success' });
+                } catch (err) {
+                    setToast({ show: true, message: 'Error al cambiar el estado.', variant: 'danger' });
+                }
+            }
+        });
+    };
+
+    const handleDelete = (id: number) => {
+        setConfirmModal({
+            show: true,
+            title: 'Eliminar Adelanto',
+            message: '¿Eliminar esta solicitud permanentemente?',
+            variant: 'danger',
+            onConfirm: async () => {
+                setConfirmModal(prev => ({ ...prev, show: false }));
+                try {
+                    await adelantoService.delete(id);
+                    loadData();
+                    setToast({ show: true, message: 'Adelanto eliminado correctamente.', variant: 'success' });
+                } catch (err: any) {
+                    const msg = err.response?.data?.Message || err.response?.data?.message || 'No se pudo eliminar.';
+                    setToast({ show: true, message: `Error: ${msg}`, variant: 'danger' });
+                }
+            }
+        });
     };
 
     const getBadge = (estado: string) => {
@@ -169,6 +221,24 @@ const Adelantos = () => {
             <AdelantoModal
                 show={showModal} handleClose={() => setShowModal(false)}
                 handleSave={handleSave} adelantoToEdit={editingAdelanto}
+            />
+
+            {/* Modal de confirmación */}
+            <ConfirmModal
+                show={confirmModal.show}
+                title={confirmModal.title}
+                message={confirmModal.message}
+                variant={confirmModal.variant}
+                onConfirm={confirmModal.onConfirm}
+                onCancel={() => setConfirmModal(prev => ({ ...prev, show: false }))}
+            />
+
+            {/* Toast para mensajes */}
+            <Toast
+                show={toast.show}
+                message={toast.message}
+                variant={toast.variant}
+                onClose={() => setToast(prev => ({ ...prev, show: false }))}
             />
         </div>
     );

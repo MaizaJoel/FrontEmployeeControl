@@ -12,10 +12,6 @@ interface Props {
 }
 
 const AdelantoModal = ({ show, handleClose, handleSave, adelantoToEdit }: Props) => {
-    // Ya no necesitamos verificar permisos aquí adentro si la lógica es estándar para Admin/Asistente
-    // Pero si queremos ser defensivos, podemos mantenerlo. 
-    // Simplificaremos asumiendo que el botón que abre este modal ya validó permisos.
-
     const [monto, setMonto] = useState(0);
     const [descripcion, setDescripcion] = useState('');
     const [fechaSolicitud, setFechaSolicitud] = useState(new Date().toISOString().split('T')[0]);
@@ -49,7 +45,7 @@ const AdelantoModal = ({ show, handleClose, handleSave, adelantoToEdit }: Props)
             const data = await empleadoService.getAll();
             setEmpleados(data);
         } catch (err) {
-            console.error("Error loading employees", err);
+            console.error("Error al cargar los empleados", err);
         }
     };
 
@@ -59,6 +55,12 @@ const AdelantoModal = ({ show, handleClose, handleSave, adelantoToEdit }: Props)
         // Validación: Deben seleccionar un empleado
         if (!idEmpleado) {
             setError('Debe seleccionar un empleado.');
+            return;
+        }
+
+        // Validación: Si se ingresa descripción, debe tener al menos 5 caracteres
+        if (descripcion.trim() && descripcion.trim().length < 5) {
+            setError('La descripción es opcional puede dejarse vacía.');
             return;
         }
 
@@ -116,13 +118,13 @@ const AdelantoModal = ({ show, handleClose, handleSave, adelantoToEdit }: Props)
                         />
                     </Form.Group>
                     <Form.Group className="mb-3">
-                        <Form.Label>Descripción</Form.Label>
+                        <Form.Label>Descripción (Opcional)</Form.Label>
                         <Form.Control
                             as="textarea"
                             rows={3}
                             value={descripcion}
                             onChange={(e) => setDescripcion(e.target.value)}
-                            required
+                            placeholder="Ingrese el motivo (opcional)"
                         />
                     </Form.Group>
                 </Modal.Body>

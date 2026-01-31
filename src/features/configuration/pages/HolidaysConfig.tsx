@@ -2,6 +2,8 @@
 import { useEffect, useState } from 'react';
 import { Button, Table, Modal, Form, Spinner } from 'react-bootstrap';
 import { feriadoService, Feriado } from '../../../services/feriadoService';
+import ConfirmModal from '../../../shared/components/ui/ConfirmModal';
+import Toast from '../../../shared/components/ui/Toast';
 
 const ConfiguracionesFeriados = () => {
     const [feriados, setFeriados] = useState<Feriado[]>([]);
@@ -9,6 +11,20 @@ const ConfiguracionesFeriados = () => {
     const [showModal, setShowModal] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
     const [formData, setFormData] = useState({ fecha: '', descripcion: '' });
+
+    // Estado para ConfirmModal
+    const [confirmModal, setConfirmModal] = useState<{
+        show: boolean;
+        title: string;
+        message: string;
+        variant: 'primary' | 'danger' | 'warning';
+        onConfirm: () => void;
+    }>({ show: false, title: '', message: '', variant: 'danger', onConfirm: () => { } });
+
+    // Estado para Toast
+    const [toast, setToast] = useState<{ show: boolean; message: string; variant: 'success' | 'danger' | 'warning' | 'info' }>({
+        show: false, message: '', variant: 'success'
+    });
 
     useEffect(() => { loadData(); }, []);
 
@@ -27,7 +43,10 @@ const ConfiguracionesFeriados = () => {
             else await feriadoService.create(formData);
             setShowModal(false);
             loadData();
-        } catch (error) { alert('Error al guardar'); }
+            setToast({ show: true, message: 'Feriado guardado correctamente.', variant: 'success' });
+        } catch (error) {
+            setToast({ show: true, message: 'Error al guardar', variant: 'danger' });
+        }
     };
 
     const handleEdit = (f: Feriado) => {
@@ -38,9 +57,23 @@ const ConfiguracionesFeriados = () => {
         setShowModal(true);
     };
 
-    const handleDelete = async (id: number) => {
-        if (!confirm('¿Eliminar feriado?')) return;
-        try { await feriadoService.delete(id); loadData(); } catch (e) { alert('Error'); }
+    const handleDelete = (id: number) => {
+        setConfirmModal({
+            show: true,
+            title: 'Eliminar Feriado',
+            message: '¿Eliminar feriado?',
+            variant: 'danger',
+            onConfirm: async () => {
+                setConfirmModal(prev => ({ ...prev, show: false }));
+                try {
+                    await feriadoService.delete(id);
+                    loadData();
+                    setToast({ show: true, message: 'Feriado eliminado.', variant: 'success' });
+                } catch (e) {
+                    setToast({ show: true, message: 'Error al eliminar', variant: 'danger' });
+                }
+            }
+        });
     };
 
     return (
@@ -77,6 +110,24 @@ const ConfiguracionesFeriados = () => {
                     <Modal.Footer><Button variant="secondary" onClick={() => setShowModal(false)}>Cancelar</Button><Button type="submit" variant="primary">Guardar</Button></Modal.Footer>
                 </Form>
             </Modal>
+
+            {/* Modal de confirmación */}
+            <ConfirmModal
+                show={confirmModal.show}
+                title={confirmModal.title}
+                message={confirmModal.message}
+                variant={confirmModal.variant}
+                onConfirm={confirmModal.onConfirm}
+                onCancel={() => setConfirmModal(prev => ({ ...prev, show: false }))}
+            />
+
+            {/* Toast para mensajes */}
+            <Toast
+                show={toast.show}
+                message={toast.message}
+                variant={toast.variant}
+                onClose={() => setToast(prev => ({ ...prev, show: false }))}
+            />
         </div>
     );
 };

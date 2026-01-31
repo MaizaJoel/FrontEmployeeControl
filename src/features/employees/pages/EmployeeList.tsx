@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react';
-import { Button, Table, Badge, Spinner, Alert, Form, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import { Button, Table, Badge, Spinner, Alert, Form, OverlayTrigger, Tooltip, InputGroup, FormControl } from 'react-bootstrap';
 import { empleadoService } from '../../../services/empleadoService';
 import { authService } from '../../../services/authService';
 import { Empleado } from '../../../types';
 import EmpleadoModal from '../components/EmpleadoModal';
 import { useDataFilter } from '../../../hooks/useDataFilter';
 import SearchBar from '../../../shared/components/ui/SearchBar';
+import ConfirmModal from '../../../shared/components/ui/ConfirmModal';
+import NotificationModal from '../../../shared/components/ui/NotificationModal';
+import Toast from '../../../shared/components/ui/Toast';
 
 import { useAuth } from '../../../context/AuthContext';
 
@@ -17,6 +20,33 @@ const Empleados = () => {
     const [showModal, setShowModal] = useState(false);
     const [editingEmpleado, setEditingEmpleado] = useState<Empleado | null>(null);
     const [resettingPassword, setResettingPassword] = useState<number | null>(null);
+
+    // Estado para modal de contraseña temporal
+    const [showPasswordModal, setShowPasswordModal] = useState(false);
+    const [tempPasswordInfo, setTempPasswordInfo] = useState<{ password: string, email: string, warning?: string } | null>(null);
+    const [copied, setCopied] = useState(false);
+
+    // Estados para ConfirmModal
+    const [confirmModal, setConfirmModal] = useState<{
+        show: boolean;
+        title: string;
+        message: string;
+        variant: 'primary' | 'danger' | 'warning';
+        onConfirm: () => void;
+    }>({ show: false, title: '', message: '', variant: 'primary', onConfirm: () => { } });
+
+    // Estado para Toast (mensajes de éxito rápidos)
+    const [toast, setToast] = useState<{ show: boolean; message: string; variant: 'success' | 'danger' | 'warning' | 'info' }>({
+        show: false, message: '', variant: 'success'
+    });
+
+    // Estado para NotificationModal (errores importantes)
+    const [notification, setNotification] = useState<{
+        show: boolean;
+        title?: string;
+        message: string;
+        variant: 'success' | 'danger' | 'warning' | 'info';
+    }>({ show: false, message: '', variant: 'info' });
 
     const { searchQuery, setSearchQuery, filteredData } = useDataFilter(empleados, ['nombre', 'apellido', 'cedula', 'email']);
 
@@ -45,42 +75,79 @@ const Empleados = () => {
         setShowModal(true);
     };
 
-    const handleToggleStatus = async (emp: Empleado) => {
+    const handleToggleStatus = (emp: Empleado) => {
         const newStatus = !emp.activo;
         const action = newStatus ? "Activar" : "Desactivar";
 
-        if (!window.confirm(`¿Deseas ${action} a ${emp.nombre}?`)) return;
-
-        try {
-            // We use the update endpoint to flip the status
-            await empleadoService.update(emp.idEmpleado, {
-                ...emp,
-                idCargo: emp.idCargo, // Required by DTO
-                activo: newStatus
-            });
-            loadEmpleados();
-        } catch (err) {
-            alert(`Error al ${action.toLowerCase()} el empleado.`);
-        }
+        setConfirmModal({
+            show: true,
+            title: `${action} Empleado`,
+            message: `¿Deseas ${action.toLowerCase()} a ${emp.nombre} ${emp.apellido}?`,
+            variant: newStatus ? 'primary' : 'warning',
+            onConfirm: async () => {
+                setConfirmModal(prev => ({ ...prev, show: false }));
+                try {
+                    await empleadoService.update(emp.idEmpleado, {
+                        ...emp,
+                        idCargo: emp.idCargo,
+                        activo: newStatus
+                    });
+                    loadEmpleados();
+                    setToast({ show: true, message: `Empleado ${action.toLowerCase()}do correctamente.`, variant: 'success' });
+                } catch (err) {
+                    setNotification({
+                        show: true,
+                        title: 'Error',
+                        message: `Error al ${action.toLowerCase()} el empleado.`,
+                        variant: 'danger'
+                    });
+                }
+            }
+        });
     };
 
-    const handleResetPassword = async (emp: Empleado) => {
-        if (!window.confirm(`¿Enviar contraseña temporal a ${emp.nombre} ${emp.apellido} (${emp.email})?`)) return;
+    const handleResetPassword = (emp: Empleado) => {
+        setConfirmModal({
+            show: true,
+            title: 'Restablecer Contraseña',
+            message: `¿Enviar contraseña temporal a ${emp.nombre} ${emp.apellido}?\n\nCorreo: ${emp.email}`,
+            variant: 'warning',
+            onConfirm: async () => {
+                setConfirmModal(prev => ({ ...prev, show: false }));
+                setResettingPassword(emp.idEmpleado);
+                try {
+                    const result = await authService.adminResetPassword(emp.email);
 
-        setResettingPassword(emp.idEmpleado);
-        try {
-            // response data: { message, tempPassword?, warning? }
-            const result = await authService.adminResetPassword(emp.email);
-
-            if (result.warning) {
-                alert(`⚠️ La contraseña se restableció, pero hubo un error enviando el correo:\n${result.warning}\n\nLa contraseña temporal es: ${result.tempPassword}`);
-            } else {
-                alert(`✅ Contraseña temporal enviada a ${emp.email}`);
+                    if (result.warning || result.tempPassword) {
+                        setTempPasswordInfo({
+                            password: result.tempPassword,
+                            email: emp.email,
+                            warning: result.warning
+                        });
+                        setCopied(false);
+                        setShowPasswordModal(true);
+                    } else {
+                        setToast({ show: true, message: `Contraseña temporal enviada a ${emp.email}`, variant: 'success' });
+                    }
+                } catch (err: any) {
+                    setNotification({
+                        show: true,
+                        title: 'Error',
+                        message: 'Error al restablecer la contraseña.',
+                        variant: 'danger'
+                    });
+                } finally {
+                    setResettingPassword(null);
+                }
             }
-        } catch (err: any) {
-            alert('Error al restablecer la contraseña.');
-        } finally {
-            setResettingPassword(null);
+        });
+    };
+
+    const handleCopyPassword = () => {
+        if (tempPasswordInfo?.password) {
+            navigator.clipboard.writeText(tempPasswordInfo.password);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
         }
     };
 
@@ -200,6 +267,63 @@ const Empleados = () => {
                 handleClose={() => setShowModal(false)}
                 handleSave={handleSave}
                 empleadoToEdit={editingEmpleado}
+            />
+
+            {/* Modal de confirmación reutilizable */}
+            <ConfirmModal
+                show={confirmModal.show}
+                title={confirmModal.title}
+                message={confirmModal.message}
+                variant={confirmModal.variant}
+                onConfirm={confirmModal.onConfirm}
+                onCancel={() => setConfirmModal(prev => ({ ...prev, show: false }))}
+            />
+
+            {/* Modal para mostrar contraseña temporal (con contenido copiable) */}
+            <NotificationModal
+                show={showPasswordModal}
+                title={tempPasswordInfo?.warning ? 'Contraseña Restablecida' : 'Contraseña Restablecida'}
+                message={tempPasswordInfo?.warning
+                    ? `Nota: El correo no pudo ser enviado.\n${tempPasswordInfo.warning}\n\nLa contraseña ha sido restablecida para: ${tempPasswordInfo?.email}`
+                    : `La contraseña ha sido restablecida para: ${tempPasswordInfo?.email}`
+                }
+                variant={tempPasswordInfo?.warning ? 'warning' : 'success'}
+                onClose={() => setShowPasswordModal(false)}
+            >
+                <Form.Label className="fw-bold">Contraseña Temporal:</Form.Label>
+                <InputGroup>
+                    <FormControl
+                        value={tempPasswordInfo?.password || ''}
+                        readOnly
+                        className="font-monospace fs-5 bg-light"
+                    />
+                    <Button
+                        variant={copied ? 'success' : 'outline-primary'}
+                        onClick={handleCopyPassword}
+                    >
+                        {copied ? '✓ Copiado' : '📋 Copiar'}
+                    </Button>
+                </InputGroup>
+                <small className="text-muted mt-2 d-block">
+                    Comunica esta contraseña al empleado de forma segura.
+                </small>
+            </NotificationModal>
+
+            {/* Modal para notificaciones de error */}
+            <NotificationModal
+                show={notification.show}
+                title={notification.title}
+                message={notification.message}
+                variant={notification.variant}
+                onClose={() => setNotification(prev => ({ ...prev, show: false }))}
+            />
+
+            {/* Toast para mensajes rápidos de éxito */}
+            <Toast
+                show={toast.show}
+                message={toast.message}
+                variant={toast.variant}
+                onClose={() => setToast(prev => ({ ...prev, show: false }))}
             />
         </div>
     );

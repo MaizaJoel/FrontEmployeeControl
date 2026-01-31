@@ -7,6 +7,9 @@ import { fichajeService } from '../../../services/fichajeService';
 import { Empleado } from '../../../types';
 import { useAuth } from '../../../context/AuthContext';
 import EmployeeSelect from '../../employees/components/EmployeeSelect';
+import ConfirmModal from '../../../shared/components/ui/ConfirmModal';
+import NotificationModal from '../../../shared/components/ui/NotificationModal';
+import Toast from '../../../shared/components/ui/Toast';
 
 // Librerías para exportar
 import jsPDF from 'jspdf';
@@ -27,6 +30,28 @@ const Reportes = () => {
 
     const [fechaInicio, setFechaInicio] = useState(firstDay);
     const [fechaFin, setFechaFin] = useState(lastDay);
+
+    // Estado para ConfirmModal
+    const [confirmModal, setConfirmModal] = useState<{
+        show: boolean;
+        title: string;
+        message: string;
+        variant: 'primary' | 'danger' | 'warning';
+        onConfirm: () => void;
+    }>({ show: false, title: '', message: '', variant: 'warning', onConfirm: () => { } });
+
+    // Estado para NotificationModal
+    const [notification, setNotification] = useState<{
+        show: boolean;
+        title: string;
+        message: string;
+        variant: 'success' | 'danger' | 'warning' | 'info';
+    }>({ show: false, title: '', message: '', variant: 'info' });
+
+    // Estado para Toast
+    const [toast, setToast] = useState<{ show: boolean; message: string; variant: 'success' | 'danger' | 'warning' | 'info' }>({
+        show: false, message: '', variant: 'success'
+    });
 
     // Esta función centraliza todos los cálculos derivados
     const procesarDatosDia = (dia: any) => {
@@ -103,7 +128,7 @@ const Reportes = () => {
         } catch (err: any) {
             console.error('Error al guardar observaciones:', err);
             const msg = err.response?.data?.message || err.message || 'Error desconocido';
-            alert(`Error al guardar observaciones: ${msg}`);
+            setToast({ show: true, message: `Error al guardar observaciones: ${msg}`, variant: 'danger' });
             return null;
         } finally {
             setIsSaving(false);
@@ -155,7 +180,7 @@ const Reportes = () => {
     const handleGenerar = async (e: React.FormEvent) => {
         e.preventDefault();
         if (selectedEmpId === 0) {
-            alert("Seleccione un empleado");
+            setToast({ show: true, message: 'Seleccione un empleado', variant: 'warning' });
             return;
         }
         await fetchReport();
@@ -165,6 +190,41 @@ const Reportes = () => {
     const getNombreEmpleado = () => {
         const emp = empleados.find(e => e.idEmpleado === selectedEmpId);
         return emp ? `${emp.apellido} ${emp.nombre}` : '';
+    };
+
+    // Handler para registrar pago / cerrar periodo
+    const handleRegistrarPago = () => {
+        setConfirmModal({
+            show: true,
+            title: 'Registrar Pago',
+            message: `¿Desea registrar este periodo como PAGADO?\n\nEsto marcará los adelantos como 'Descontado' y cerrará la nómina para ${getNombreEmpleado()}.`,
+            variant: 'warning',
+            onConfirm: async () => {
+                setConfirmModal(prev => ({ ...prev, show: false }));
+                try {
+                    await nominaService.generar(fechaInicio, fechaFin, [selectedEmpId]);
+                    setNotification({
+                        show: true,
+                        title: 'Nómina Registrada',
+                        message: 'Nómina registrada exitosamente.',
+                        variant: 'success'
+                    });
+                } catch (e: any) {
+                    console.error(e);
+                    const msg = e.response?.data || "Error al registrar pago.";
+                    setToast({
+                        show: true,
+                        message: typeof msg === 'string' ? msg : "Error al procesar la solicitud.",
+                        variant: 'danger'
+                    });
+                }
+            }
+        });
+    };
+
+    const handleNotificationClose = () => {
+        setNotification(prev => ({ ...prev, show: false }));
+        window.location.reload();
     };
 
     // --- EXPORTAR PDF ---
@@ -378,19 +438,7 @@ const Reportes = () => {
                         <div className="d-flex justify-content-end mb-3">
                             <Button
                                 variant="outline-primary"
-                                onClick={async () => {
-                                    if (confirm(`¿Desea registrar este periodo como PAGADO? \nEsto marcará los adelantos como 'Descontado' y cerrará la nómina para ${getNombreEmpleado()}.`)) {
-                                        try {
-                                            await nominaService.generar(fechaInicio, fechaFin, [selectedEmpId]);
-                                            alert("Nómina registrada exitosamente.");
-                                            window.location.reload();
-                                        } catch (e: any) {
-                                            console.error(e);
-                                            const msg = e.response?.data || "Error al registrar pago.";
-                                            alert(typeof msg === 'string' ? msg : "Error al procesar la solicitud. Revise la consola.");
-                                        }
-                                    }
-                                }}
+                                onClick={handleRegistrarPago}
                             >
                                 Registrar Pago / Cerrar Periodo
                             </Button>
@@ -515,6 +563,33 @@ const Reportes = () => {
                     </Card>
                 </div>
             )}
+
+            {/* Modal de confirmación */}
+            <ConfirmModal
+                show={confirmModal.show}
+                title={confirmModal.title}
+                message={confirmModal.message}
+                variant={confirmModal.variant}
+                onConfirm={confirmModal.onConfirm}
+                onCancel={() => setConfirmModal(prev => ({ ...prev, show: false }))}
+            />
+
+            {/* Modal de notificación */}
+            <NotificationModal
+                show={notification.show}
+                title={notification.title}
+                message={notification.message}
+                variant={notification.variant}
+                onClose={handleNotificationClose}
+            />
+
+            {/* Toast para mensajes */}
+            <Toast
+                show={toast.show}
+                message={toast.message}
+                variant={toast.variant}
+                onClose={() => setToast(prev => ({ ...prev, show: false }))}
+            />
         </div>
     );
 };

@@ -1,11 +1,28 @@
 import { useEffect, useState } from 'react';
-import { Table, Button, Spinner, Badge, Form } from 'react-bootstrap';
+import { Table, Spinner, Badge, Form } from 'react-bootstrap';
 import { roleService, Role, UserWithRoles } from '../../../services/roleService';
+import ConfirmModal from '../../../shared/components/ui/ConfirmModal';
+import Toast from '../../../shared/components/ui/Toast';
+import { getRoleDisplayName } from '../../../utils/textUtils';
 
 const UserRoles = () => {
     const [users, setUsers] = useState<UserWithRoles[]>([]);
     const [roles, setRoles] = useState<Role[]>([]); // Lista de roles disponibles
     const [loading, setLoading] = useState(false);
+
+    // Estado para ConfirmModal
+    const [confirmModal, setConfirmModal] = useState<{
+        show: boolean;
+        title: string;
+        message: string;
+        variant: 'primary' | 'danger' | 'warning';
+        onConfirm: () => void;
+    }>({ show: false, title: '', message: '', variant: 'warning', onConfirm: () => { } });
+
+    // Estado para Toast
+    const [toast, setToast] = useState<{ show: boolean; message: string; variant: 'success' | 'danger' | 'warning' | 'info' }>({
+        show: false, message: '', variant: 'success'
+    });
 
     useEffect(() => {
         loadData();
@@ -22,27 +39,44 @@ const UserRoles = () => {
             setRoles(rolesData);
         } catch (error) {
             console.error(error);
-            alert('Error al cargar datos.');
+            setToast({ show: true, message: 'Error al cargar datos.', variant: 'danger' });
         } finally {
             setLoading(false);
         }
     };
 
-    const handleRoleChange = async (userId: string, roleName: string, hasRole: boolean) => {
-        try {
-            if (hasRole) {
-                // Si ya lo tiene, lo quitamos
-                if (!confirm(`¿Quitar rol ${roleName}?`)) return;
-                await roleService.removeRole(userId, roleName);
-            } else {
-                // Si no lo tiene, lo asignamos
-                await roleService.assignRole(userId, roleName);
-            }
-            // Recargar datos para ver cambios
-            const updatedUsers = await roleService.getUsers();
-            setUsers(updatedUsers);
-        } catch (err: any) {
-            alert(err.response?.data || 'Error al cambiar rol.');
+    const handleRoleChange = (userId: string, roleName: string, hasRole: boolean) => {
+        if (hasRole) {
+            // Si ya lo tiene, confirmar antes de quitar
+            setConfirmModal({
+                show: true,
+                title: 'Quitar Rol',
+                message: `¿Quitar rol ${getRoleDisplayName(roleName)}?`,
+                variant: 'warning',
+                onConfirm: async () => {
+                    setConfirmModal(prev => ({ ...prev, show: false }));
+                    try {
+                        await roleService.removeRole(userId, roleName);
+                        const updatedUsers = await roleService.getUsers();
+                        setUsers(updatedUsers);
+                        setToast({ show: true, message: `Rol ${getRoleDisplayName(roleName)} removido.`, variant: 'success' });
+                    } catch (err: any) {
+                        setToast({ show: true, message: err.response?.data || 'Error al cambiar rol.', variant: 'danger' });
+                    }
+                }
+            });
+        } else {
+            // Si no lo tiene, asignar directamente
+            (async () => {
+                try {
+                    await roleService.assignRole(userId, roleName);
+                    const updatedUsers = await roleService.getUsers();
+                    setUsers(updatedUsers);
+                    setToast({ show: true, message: `Rol ${getRoleDisplayName(roleName)} asignado.`, variant: 'success' });
+                } catch (err: any) {
+                    setToast({ show: true, message: err.response?.data || 'Error al cambiar rol.', variant: 'danger' });
+                }
+            })();
         }
     };
 
@@ -59,7 +93,7 @@ const UserRoles = () => {
                                 <th>Roles Actuales</th>
                                 {roles.map(r => (
                                     <th key={r.id} className="text-center" style={{ minWidth: '100px' }}>
-                                        {r.name}
+                                        {getRoleDisplayName(r.name)}
                                     </th>
                                 ))}
                             </tr>
@@ -73,7 +107,7 @@ const UserRoles = () => {
                                     </td>
                                     <td>
                                         {u.roles.map(r => (
-                                            <Badge key={r} bg="info" className="me-1 text-dark">{r}</Badge>
+                                            <Badge key={r} bg="info" className="me-1 text-dark">{getRoleDisplayName(r)}</Badge>
                                         ))}
                                     </td>
                                     {/* Checkboxes dinámicos por cada Rol */}
@@ -96,6 +130,24 @@ const UserRoles = () => {
                     </Table>
                 </div>
             )}
+
+            {/* Modal de confirmación */}
+            <ConfirmModal
+                show={confirmModal.show}
+                title={confirmModal.title}
+                message={confirmModal.message}
+                variant={confirmModal.variant}
+                onConfirm={confirmModal.onConfirm}
+                onCancel={() => setConfirmModal(prev => ({ ...prev, show: false }))}
+            />
+
+            {/* Toast para mensajes */}
+            <Toast
+                show={toast.show}
+                message={toast.message}
+                variant={toast.variant}
+                onClose={() => setToast(prev => ({ ...prev, show: false }))}
+            />
         </div>
     );
 };

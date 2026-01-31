@@ -7,6 +7,8 @@ import { empleadoService } from '../../../services/empleadoService';
 import { Empleado } from '../../../types';
 import JornadaModal from '../components/FichajesJornadaModal';
 import EmployeeSelect from '../../employees/components/EmployeeSelect';
+import ConfirmModal from '../../../shared/components/ui/ConfirmModal';
+import Toast from '../../../shared/components/ui/Toast';
 
 const Fichajes = () => {
     const [fichajes, setFichajes] = useState<FichajeLog[]>([]);
@@ -29,6 +31,20 @@ const Fichajes = () => {
     const [formFecha, setFormFecha] = useState('');
     const [formHora, setFormHora] = useState('');
     const [formTipo, setFormTipo] = useState('ENTRADA');
+
+    // Estado para ConfirmModal
+    const [confirmModal, setConfirmModal] = useState<{
+        show: boolean;
+        title: string;
+        message: string;
+        variant: 'primary' | 'danger' | 'warning';
+        onConfirm: () => void;
+    }>({ show: false, title: '', message: '', variant: 'danger', onConfirm: () => { } });
+
+    // Estado para Toast
+    const [toast, setToast] = useState<{ show: boolean; message: string; variant: 'success' | 'danger' | 'warning' | 'info' }>({
+        show: false, message: '', variant: 'success'
+    });
 
     useEffect(() => {
         loadMaestros();
@@ -96,17 +112,29 @@ const Fichajes = () => {
             });
             setShowEditModal(false);
             loadData();
+            setToast({ show: true, message: 'Fichaje actualizado correctamente.', variant: 'success' });
         } catch (err) {
-            alert('Error al actualizar.');
+            setToast({ show: true, message: 'Error al actualizar.', variant: 'danger' });
         }
     };
 
-    const handleDelete = async (id: number) => {
-        if (!confirm("¿Eliminar este registro permanentemente?")) return;
-        try {
-            await fichajeService.delete(id);
-            loadData();
-        } catch (e) { alert("Error al eliminar"); }
+    const handleDelete = (id: number) => {
+        setConfirmModal({
+            show: true,
+            title: 'Eliminar Fichaje',
+            message: '¿Eliminar este registro permanentemente?',
+            variant: 'danger',
+            onConfirm: async () => {
+                setConfirmModal(prev => ({ ...prev, show: false }));
+                try {
+                    await fichajeService.delete(id);
+                    loadData();
+                    setToast({ show: true, message: 'Fichaje eliminado.', variant: 'success' });
+                } catch (e) {
+                    setToast({ show: true, message: 'Error al eliminar', variant: 'danger' });
+                }
+            }
+        });
     };
 
     // El backend ahora envía la fecha en formato "Hora Empresa" (ej: "2026-01-26T08:30:00")
@@ -224,6 +252,24 @@ const Fichajes = () => {
                     <Button variant="primary" onClick={handleSaveEdit}>Guardar Cambios</Button>
                 </Modal.Footer>
             </Modal>
+
+            {/* Modal de confirmación */}
+            <ConfirmModal
+                show={confirmModal.show}
+                title={confirmModal.title}
+                message={confirmModal.message}
+                variant={confirmModal.variant}
+                onConfirm={confirmModal.onConfirm}
+                onCancel={() => setConfirmModal(prev => ({ ...prev, show: false }))}
+            />
+
+            {/* Toast para mensajes */}
+            <Toast
+                show={toast.show}
+                message={toast.message}
+                variant={toast.variant}
+                onClose={() => setToast(prev => ({ ...prev, show: false }))}
+            />
         </div>
     );
 };

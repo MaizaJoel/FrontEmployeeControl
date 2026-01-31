@@ -2,14 +2,14 @@ import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom
 import Login from './features/auth/pages/Login';
 import ForgotPassword from './features/auth/pages/ForgotPassword';
 import ResetPassword from './features/auth/pages/ResetPassword';
-import Dashboard from './pages/dashboard/Dashboard'; // Keeping Dashboard as page for now if not moved
+import Dashboard from './features/dashboard/Dashboard'; // Moved to features
 import EmployeeManagement from './features/employees/pages/EmployeeManagement';
 import Adelantos from './features/employees/pages/Advances'; // Assuming moved/renamed or just generic
 import MainLayout from './shared/components/layout/MainLayout';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import KioscoLayout from './shared/components/layout/KioscoLayout';
 import Kiosco from './features/attendance/pages/Kiosco';
-import './styles/TableStyles.css';
+import './shared/styles/TableStyles.css';
 import Fichajes from './features/attendance/pages/Fichajes'; // Updated path
 import Reportes from './features/reports/pages/MyReports';
 import ConfiguracionesPage from './features/configuration/pages/ConfigurationPage';

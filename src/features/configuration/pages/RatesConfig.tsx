@@ -3,6 +3,8 @@ import { useState, useEffect } from 'react';
 import { Card, Form, Button, Table, Row, Col, Badge, Alert, Spinner } from 'react-bootstrap';
 import { tasasService, Tasa, HorarioTasa } from '../../../services/tasasService';
 import { configuracionService, Configuracion } from '../../../services/configuracionService';
+import ConfirmModal from '../../../shared/components/ui/ConfirmModal';
+import Toast from '../../../shared/components/ui/Toast';
 
 const DAYS_OF_WEEK = [
     { key: 'LUN', label: 'Lunes' },
@@ -21,6 +23,20 @@ const ConfiguracionTasas = () => {
     const [laborableConfigDays, setLaborableConfigDays] = useState<Set<string>>(new Set()); // Para saber qué días ya son laborables
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+
+    // Estado para ConfirmModal
+    const [confirmModal, setConfirmModal] = useState<{
+        show: boolean;
+        title: string;
+        message: string;
+        variant: 'primary' | 'danger' | 'warning';
+        onConfirm: () => void;
+    }>({ show: false, title: '', message: '', variant: 'danger', onConfirm: () => { } });
+
+    // Estado para Toast
+    const [toast, setToast] = useState<{ show: boolean; message: string; variant: 'success' | 'danger' | 'warning' | 'info' }>({
+        show: false, message: '', variant: 'success'
+    });
 
     // Form State
     const [editingId, setEditingId] = useState<number | null>(null);
@@ -135,14 +151,23 @@ const ConfiguracionTasas = () => {
         }
     };
 
-    const handleDelete = async (id: number) => {
-        if (!window.confirm('¿Eliminar esta regla?')) return;
-        try {
-            await tasasService.deleteHorario(id);
-            setHorarios(horarios.filter(h => h.idHorarioTasa !== id));
-        } catch (err) {
-            alert('Error al eliminar');
-        }
+    const handleDelete = (id: number) => {
+        setConfirmModal({
+            show: true,
+            title: 'Eliminar Regla',
+            message: '¿Eliminar esta regla?',
+            variant: 'danger',
+            onConfirm: async () => {
+                setConfirmModal(prev => ({ ...prev, show: false }));
+                try {
+                    await tasasService.deleteHorario(id);
+                    setHorarios(horarios.filter(h => h.idHorarioTasa !== id));
+                    setToast({ show: true, message: 'Regla eliminada correctamente.', variant: 'success' });
+                } catch (err) {
+                    setToast({ show: true, message: 'Error al eliminar la regla.', variant: 'danger' });
+                }
+            }
+        });
     };
 
     return (
@@ -312,6 +337,24 @@ const ConfiguracionTasas = () => {
                     </Card>
                 </Col>
             </Row>
+
+            {/* Modal de confirmación */}
+            <ConfirmModal
+                show={confirmModal.show}
+                title={confirmModal.title}
+                message={confirmModal.message}
+                variant={confirmModal.variant}
+                onConfirm={confirmModal.onConfirm}
+                onCancel={() => setConfirmModal(prev => ({ ...prev, show: false }))}
+            />
+
+            {/* Toast para mensajes */}
+            <Toast
+                show={toast.show}
+                message={toast.message}
+                variant={toast.variant}
+                onClose={() => setToast(prev => ({ ...prev, show: false }))}
+            />
         </div>
     );
 };

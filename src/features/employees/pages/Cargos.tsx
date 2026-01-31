@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { Modal, Button, Form, Table, Alert, Spinner } from 'react-bootstrap';
 import { cargoService } from '../../../services/cargoService';
 import { Cargo } from '../../../types';
+import ConfirmModal from '../../../shared/components/ui/ConfirmModal';
+import Toast from '../../../shared/components/ui/Toast';
 
 import { useAuth } from '../../../context/AuthContext';
 
@@ -20,6 +22,20 @@ const Cargos = () => {
         nombreCargo: '',
         descripcion: '',
         salarioBase: 0
+    });
+
+    // Estado para ConfirmModal
+    const [confirmModal, setConfirmModal] = useState<{
+        show: boolean;
+        title: string;
+        message: string;
+        variant: 'primary' | 'danger' | 'warning';
+        onConfirm: () => void;
+    }>({ show: false, title: '', message: '', variant: 'danger', onConfirm: () => { } });
+
+    // Estado para Toast
+    const [toast, setToast] = useState<{ show: boolean; message: string; variant: 'success' | 'danger' | 'warning' | 'info' }>({
+        show: false, message: '', variant: 'success'
     });
 
     // Cargar datos al inicio
@@ -69,23 +85,32 @@ const Cargos = () => {
                 await cargoService.create(formData);
             }
             setShowModal(false);
-            loadCargos(); // Recargar tabla
+            loadCargos();
+            setToast({ show: true, message: 'Cargo guardado correctamente.', variant: 'success' });
         } catch (err) {
-            alert('Error al guardar. Revisa la consola.');
+            setToast({ show: true, message: 'Error al guardar. Revisa la consola.', variant: 'danger' });
             console.error(err);
         }
     };
 
     // Eliminar
-    const handleDelete = async (id: number) => {
-        if (window.confirm('¿Seguro que deseas eliminar este cargo?')) {
-            try {
-                await cargoService.delete(id);
-                loadCargos();
-            } catch (err) {
-                alert('Error al eliminar. Puede que esté asignado a un empleado.');
+    const handleDelete = (id: number) => {
+        setConfirmModal({
+            show: true,
+            title: 'Eliminar Cargo',
+            message: '¿Seguro que deseas eliminar este cargo?',
+            variant: 'danger',
+            onConfirm: async () => {
+                setConfirmModal(prev => ({ ...prev, show: false }));
+                try {
+                    await cargoService.delete(id);
+                    loadCargos();
+                    setToast({ show: true, message: 'Cargo eliminado correctamente.', variant: 'success' });
+                } catch (err) {
+                    setToast({ show: true, message: 'Error al eliminar. Puede que esté asignado a un empleado.', variant: 'danger' });
+                }
             }
-        }
+        });
     };
 
     return (
@@ -205,6 +230,24 @@ const Cargos = () => {
                     </Modal.Footer>
                 </Form>
             </Modal>
+
+            {/* Modal de confirmación */}
+            <ConfirmModal
+                show={confirmModal.show}
+                title={confirmModal.title}
+                message={confirmModal.message}
+                variant={confirmModal.variant}
+                onConfirm={confirmModal.onConfirm}
+                onCancel={() => setConfirmModal(prev => ({ ...prev, show: false }))}
+            />
+
+            {/* Toast para mensajes */}
+            <Toast
+                show={toast.show}
+                message={toast.message}
+                variant={toast.variant}
+                onClose={() => setToast(prev => ({ ...prev, show: false }))}
+            />
         </div>
     );
 };

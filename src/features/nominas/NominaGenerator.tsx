@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Card, Button, Form, Table, Alert, Badge } from 'react-bootstrap';
 import { nominaService, PayrollPreview } from '../../services/nominaService';
 import { useNavigate } from 'react-router-dom';
+import ConfirmModal from '../../shared/components/ui/ConfirmModal';
+import NotificationModal from '../../shared/components/ui/NotificationModal';
 
 const NominaGenerator = () => {
     const navigate = useNavigate();
@@ -17,13 +19,28 @@ const NominaGenerator = () => {
     const [previewData, setPreviewData] = useState<PayrollPreview | null>(null);
     const [selectedEmployees, setSelectedEmployees] = useState<number[]>([]);
 
+    // Estado para ConfirmModal
+    const [confirmModal, setConfirmModal] = useState<{
+        show: boolean;
+        title: string;
+        message: string;
+        variant: 'primary' | 'danger' | 'warning';
+        onConfirm: () => void;
+    }>({ show: false, title: '', message: '', variant: 'warning', onConfirm: () => { } });
+
+    // Estado para NotificationModal (success)
+    const [notification, setNotification] = useState<{
+        show: boolean;
+        title: string;
+        message: string;
+        variant: 'success' | 'danger' | 'warning' | 'info';
+    }>({ show: false, title: '', message: '', variant: 'success' });
+
     const handlePreview = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
         setLoading(true);
         try {
-
-
             const data = await nominaService.preview(startDate, endDate);
             setPreviewData(data);
             // Default select all
@@ -56,30 +73,43 @@ const NominaGenerator = () => {
         }
     };
 
-    const handleGenerate = async () => {
+    const handleGenerate = () => {
         if (selectedEmployees.length === 0) return;
 
-        if (!window.confirm(`¿Estás seguro de generar y cerrar la nómina para ${selectedEmployees.length} empleados? Esta acción descontará los adelantos automáticamente.`)) {
-            return;
-        }
-
-        setLoading(true);
-        try {
-            await nominaService.generar(startDate, endDate, selectedEmployees);
-            alert("¡Nómina generada exitosamente!");
-            navigate('/rrhh/nominas');
-        } catch (err: any) {
-            console.error(err);
-            // Si el backend devuelve un string directo o un objeto con message
-            let msg = "Error al guardar la nómina.";
-            if (err.response?.data) {
-                if (typeof err.response.data === 'string') msg = err.response.data;
-                else if (typeof err.response.data.message === 'string') msg = err.response.data.message;
+        setConfirmModal({
+            show: true,
+            title: 'Generar Nómina',
+            message: `¿Estás seguro de generar y cerrar la nómina para ${selectedEmployees.length} empleados?\n\nEsta acción descontará los adelantos automáticamente.`,
+            variant: 'warning',
+            onConfirm: async () => {
+                setConfirmModal(prev => ({ ...prev, show: false }));
+                setLoading(true);
+                try {
+                    await nominaService.generar(startDate, endDate, selectedEmployees);
+                    setNotification({
+                        show: true,
+                        title: 'Nómina Generada',
+                        message: '¡Nómina generada exitosamente!',
+                        variant: 'success'
+                    });
+                } catch (err: any) {
+                    console.error(err);
+                    let msg = "Error al guardar la nómina.";
+                    if (err.response?.data) {
+                        if (typeof err.response.data === 'string') msg = err.response.data;
+                        else if (typeof err.response.data.message === 'string') msg = err.response.data.message;
+                    }
+                    setError(msg);
+                } finally {
+                    setLoading(false);
+                }
             }
-            setError(msg);
-        } finally {
-            setLoading(false);
-        }
+        });
+    };
+
+    const handleNotificationClose = () => {
+        setNotification(prev => ({ ...prev, show: false }));
+        navigate('/rrhh/nominas');
     };
 
     return (
@@ -223,6 +253,25 @@ const NominaGenerator = () => {
                     </Card>
                 </div>
             )}
+
+            {/* Modal de confirmación */}
+            <ConfirmModal
+                show={confirmModal.show}
+                title={confirmModal.title}
+                message={confirmModal.message}
+                variant={confirmModal.variant}
+                onConfirm={confirmModal.onConfirm}
+                onCancel={() => setConfirmModal(prev => ({ ...prev, show: false }))}
+            />
+
+            {/* Modal de éxito */}
+            <NotificationModal
+                show={notification.show}
+                title={notification.title}
+                message={notification.message}
+                variant={notification.variant}
+                onClose={handleNotificationClose}
+            />
         </div>
     );
 };
