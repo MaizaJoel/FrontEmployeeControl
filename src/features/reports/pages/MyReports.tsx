@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Form, Button, Table, Card, Row, Col, Spinner, Alert, Badge } from 'react-bootstrap';
 import { nominaService } from '../../../services/nominaService';
-import { reporteService, ReporteNomina } from '../../../services/reporteService';
+import { reporteService, ReporteNomina, DetalleDiario } from '../../../services/reporteService';
 import { empleadoService } from '../../../services/empleadoService';
 import { fichajeService } from '../../../services/fichajeService';
 import { Empleado } from '../../../types';
@@ -54,14 +54,18 @@ const Reportes = () => {
     });
 
     // Esta función centraliza todos los cálculos derivados
-    const procesarDatosDia = (dia: any) => {
-        const adelantosDelDia = getAdelantosDelDia(dia.fecha);
-        const totalAdelantosDelDia = adelantosDelDia.reduce((sum: number, a: any) => sum + a.monto, 0);
+    const procesarDatosDia = (dia: DetalleDiario) => {
+        // Backend now provides these values directly
+        const totalAdelantosDelDia = dia.totalAdelantos;
+        const netoDespuesAdelantos = dia.netoFinalDia;
 
-        // REUTILIZAMOS lo que calculó el Backend (evitamos discrepancias)
+        // REUTILIZAMOS lo que calculó el Backend
         const pagoExtras = dia.valorExtrasDiurnasPagables + dia.valorExtrasNocturnasPagables;
         const deducciones = dia.valorDeduccionesPagables;
-        const netoDespuesAdelantos = dia.pagoNetoDia - totalAdelantosDelDia;
+
+        // Still need to get descriptions if we want to show them
+        // We can keep getAdelantosDelDia for the tooltip/notes, or just use what we have
+        const adelantosDelDia = getAdelantosDelDia(dia.fecha);
         const notasAdelantos = adelantosDelDia.map((a: any) => a.descripcion).join('; ') || '-';
 
         return {
@@ -254,7 +258,7 @@ const Reportes = () => {
                 datos.horaEntrada || '-',
                 datos.horaSalida || '-',
                 `$${datos.pagoDiarioBase.toFixed(2)}`,
-                `D:${Math.round(datos.minutosExtrasDiurnas)}m N:${Math.round(datos.minutosExtrasNocturnas)}m`,
+                `D:${Math.round(datos.minutosExtrasDiurnas)}m N:${Math.round(datos.minutosExtrasNocturnas)}m ${datos.minutosDeficit > 0 ? `(-${Math.round(datos.minutosDeficit)}m)` : ''}`,
                 `$${datos.pagoExtras.toFixed(2)}`,
                 `$${datos.deducciones.toFixed(2)}`,
                 `$${datos.pagoNetoDia.toFixed(2)}`,
@@ -267,7 +271,7 @@ const Reportes = () => {
 
         autoTable(doc, {
             startY: 35,
-            head: [['Fecha', 'Entrada', 'Salida', 'Pago Base', 'Extras', 'Pago Extras', 'Deducciones', 'Neto Diario', 'Neto-Adelantos', 'Adelanto', 'Nota', 'Observación']],
+            head: [['Fecha', 'Entrada', 'Salida', 'Pago Base', 'Extras / Atrasos', 'Pago Extras', 'Deducciones', 'Neto Diario', 'Neto-Adelantos', 'Adelanto', 'Nota', 'Observación']],
             body: tableData,
             foot: [['', '', '', '', '', '', '', '', 'TOTAL NETO:', `$${reporte.netoAPagar.toFixed(2)}`, '', '']],
             styles: { fontSize: 7 }
@@ -485,7 +489,7 @@ const Reportes = () => {
                                         <th>Entrada</th>
                                         <th>Salida</th>
                                         <th className="text-end">Pago Base</th>
-                                        <th>Extras (D/N)</th>
+                                        <th>Extras / Atrasos</th>
                                         <th className="text-end">Pago Extras</th>
                                         <th className="text-end">Deducciones</th>
                                         <th className="text-end">Neto Diario</th>
@@ -521,7 +525,12 @@ const Reportes = () => {
                                                     )}
                                                     {dia.minutosDeficit > 0 && (
                                                         <Badge bg="danger" title="Atraso / Salida temprana">
-                                                            -{Math.round(dia.minutosDeficit)}m
+                                                            A: -{Math.round(dia.minutosDeficit)}m
+                                                        </Badge>
+                                                    )}
+                                                    {dia.minutosAtrasoGracia > 0 && (
+                                                        <Badge bg="success" className="ms-1" title="Atraso perdonado por tolerancia">
+                                                            G: {Math.round(dia.minutosAtrasoGracia)}m
                                                         </Badge>
                                                     )}
                                                 </td>

@@ -15,8 +15,14 @@ export interface DetalleDiario {
     minutosExtrasDiurnas: number;
     minutosExtrasNocturnas: number;
     minutosDeficit: number;
+    minutosAtrasoGracia: number;
     pagoDiarioBase: number;
+    valorExtrasNocturnasPagables: number;
+    valorExtrasDiurnasPagables: number;
+    valorDeduccionesPagables: number;
     pagoNetoDia: number;
+    totalAdelantos: number;
+    netoFinalDia: number;
     logCalculo: string;
     observacion: string;
 }
