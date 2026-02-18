@@ -7,7 +7,7 @@ const EmailConfig = () => {
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
-    
+
     // Mapeo local de valores
     const [smtpHost, setSmtpHost] = useState('');
     const [smtpPort, setSmtpPort] = useState('');
@@ -16,7 +16,7 @@ const EmailConfig = () => {
     const [smtpFromName, setSmtpFromName] = useState('');
 
     // IDs para actualización (si existen)
-    const [configIds, setConfigIds] = useState<{[key: string]: number}>({});
+    const [configIds, setConfigIds] = useState<{ [key: string]: number }>({});
 
     const [showPass, setShowPass] = useState(false);
 
@@ -26,8 +26,8 @@ const EmailConfig = () => {
         setLoading(true);
         try {
             const data = await configuracionService.getAll();
-            const mapping: {[key: string]: number} = {};
-            
+            const mapping: { [key: string]: number } = {};
+
             data.forEach(c => {
                 mapping[c.clave] = c.idConfiguracion;
                 if (c.clave === 'SMTP_HOST') setSmtpHost(c.valor);
@@ -37,12 +37,12 @@ const EmailConfig = () => {
                 if (c.clave === 'SMTP_FROM_NAME') setSmtpFromName(c.valor);
             });
             setConfigIds(mapping);
-            
-        } catch (error) { 
-            console.error(error); 
+
+        } catch (error) {
+            console.error(error);
             setError("Error cargando configuraciones");
-        } finally { 
-            setLoading(false); 
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -95,9 +95,9 @@ const EmailConfig = () => {
                         <div className="col-md-6 mb-3">
                             <Form.Group>
                                 <Form.Label>Host SMTP</Form.Label>
-                                <Form.Control 
-                                    value={smtpHost} 
-                                    onChange={e => setSmtpHost(e.target.value)} 
+                                <Form.Control
+                                    value={smtpHost}
+                                    onChange={e => setSmtpHost(e.target.value)}
                                     placeholder="smtp.hostinger.com"
                                     required
                                 />
@@ -107,9 +107,9 @@ const EmailConfig = () => {
                         <div className="col-md-6 mb-3">
                             <Form.Group>
                                 <Form.Label>Puerto SMTP</Form.Label>
-                                <Form.Control 
-                                    value={smtpPort} 
-                                    onChange={e => setSmtpPort(e.target.value)} 
+                                <Form.Control
+                                    value={smtpPort}
+                                    onChange={e => setSmtpPort(e.target.value)}
                                     placeholder="465"
                                     required
                                 />
@@ -122,10 +122,10 @@ const EmailConfig = () => {
                         <div className="col-md-6 mb-3">
                             <Form.Group>
                                 <Form.Label>Usuario / Email</Form.Label>
-                                <Form.Control 
-                                    value={smtpUser} 
-                                    onChange={e => setSmtpUser(e.target.value)} 
-                                    placeholder="info@freesias.ec"
+                                <Form.Control
+                                    value={smtpUser}
+                                    onChange={e => setSmtpUser(e.target.value)}
+                                    placeholder="mail@mail.com"
                                     required
                                 />
                             </Form.Group>
@@ -134,10 +134,10 @@ const EmailConfig = () => {
                             <Form.Group>
                                 <Form.Label>Contraseña</Form.Label>
                                 <InputGroup>
-                                    <Form.Control 
+                                    <Form.Control
                                         type={showPass ? "text" : "password"}
-                                        value={smtpPass} 
-                                        onChange={e => setSmtpPass(e.target.value)} 
+                                        value={smtpPass}
+                                        onChange={e => setSmtpPass(e.target.value)}
                                         placeholder="Ingrese la contraseña del correo"
                                         required
                                     />
@@ -152,9 +152,9 @@ const EmailConfig = () => {
                     <div className="mb-4">
                         <Form.Group>
                             <Form.Label>Nombre del Remitente</Form.Label>
-                            <Form.Control 
-                                value={smtpFromName} 
-                                onChange={e => setSmtpFromName(e.target.value)} 
+                            <Form.Control
+                                value={smtpFromName}
+                                onChange={e => setSmtpFromName(e.target.value)}
                                 placeholder="Employee Control System"
                             />
                         </Form.Group>
