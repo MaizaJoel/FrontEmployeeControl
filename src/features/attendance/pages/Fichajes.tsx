@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { getLocalStringFormFormat } from '../../../utils/dateUtils';
 import { Table, Spinner, Badge, Card, Alert, Button, Form, Row, Col, Modal } from 'react-bootstrap';
 import { fichajeService } from '../../../services/fichajeService';
 import { FichajeLog } from '../../../types';
@@ -16,8 +17,8 @@ const Fichajes = () => {
 
     // Filtros
     const [filtroEmpleado, setFiltroEmpleado] = useState<number>(0);
-    const [fechaInicio, setFechaInicio] = useState(new Date().toISOString().split('T')[0]);
-    const [fechaFin, setFechaFin] = useState(new Date().toISOString().split('T')[0]);
+    const [fechaInicio, setFechaInicio] = useState(getLocalStringFormFormat());
+    const [fechaFin, setFechaFin] = useState(getLocalStringFormFormat());
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');

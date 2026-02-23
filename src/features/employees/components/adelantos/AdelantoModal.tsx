@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Modal, Button, Form, Alert } from 'react-bootstrap';
+import { Form, Button, Modal, Alert } from 'react-bootstrap';
+import { getLocalStringFormFormat } from '../../../../utils/dateUtils';
 import { Adelanto, CreateAdelanto } from '../../../../services/adelantoService';
 import { empleadoService } from '../../../../services/empleadoService';
 import { Empleado } from '../../../../types';
@@ -14,7 +15,7 @@ interface Props {
 const AdelantoModal = ({ show, handleClose, handleSave, adelantoToEdit }: Props) => {
     const [monto, setMonto] = useState(0);
     const [descripcion, setDescripcion] = useState('');
-    const [fechaSolicitud, setFechaSolicitud] = useState(new Date().toISOString().split('T')[0]);
+    const [fechaSolicitud, setFechaSolicitud] = useState(getLocalStringFormFormat());
     const [idEmpleado, setIdEmpleado] = useState<number | null>(null);
     const [empleados, setEmpleados] = useState<Empleado[]>([]);
     const [error, setError] = useState('');
@@ -34,7 +35,7 @@ const AdelantoModal = ({ show, handleClose, handleSave, adelantoToEdit }: Props)
         } else {
             setMonto(0);
             setDescripcion('');
-            setFechaSolicitud(new Date().toISOString().split('T')[0]);
+            setFechaSolicitud(getLocalStringFormFormat());
             setIdEmpleado(null);
         }
         setError('');

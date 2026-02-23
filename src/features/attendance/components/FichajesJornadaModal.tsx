@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { getLocalStringFormFormat } from '../../../utils/dateUtils';
 import { Modal, Button, Form, Row, Col, Alert } from 'react-bootstrap';
 import { Empleado } from '../../../types';
 import { fichajeService } from '../../../services/fichajeService';
@@ -91,7 +92,7 @@ const FichajesJornadaModal = ({ show, handleClose, handleSave, empleados, initia
                 if (evt.esDiaSiguiente) {
                     baseDate.setDate(baseDate.getDate() + 1);
                 }
-                const fechaIso = baseDate.toISOString().split('T')[0]; // YYYY-MM-DD
+                const fechaIso = getLocalStringFormFormat(baseDate); // YYYY-MM-DD
                 const fechaHoraLocal = `${fechaIso}T${evt.hora}:00`; // Formato local ISO
 
                 await fichajeService.createManual({

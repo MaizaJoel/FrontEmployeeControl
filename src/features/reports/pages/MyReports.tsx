@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { getLocalStringFormFormat } from '../../../utils/dateUtils';
 import { Form, Button, Table, Card, Row, Col, Spinner, Alert, Badge } from 'react-bootstrap';
 import { nominaService } from '../../../services/nominaService';
 import { reporteService, ReporteNomina, DetalleDiario } from '../../../services/reporteService';
@@ -25,8 +26,8 @@ const Reportes = () => {
 
     // Fechas (Default: Inicio y fin del mes actual)
     const now = new Date();
-    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+    const firstDay = getLocalStringFormFormat(new Date(now.getFullYear(), now.getMonth(), 1));
+    const lastDay = getLocalStringFormFormat(new Date(now.getFullYear(), now.getMonth() + 1, 0));
 
     const [fechaInicio, setFechaInicio] = useState(firstDay);
     const [fechaFin, setFechaFin] = useState(lastDay);
@@ -355,7 +356,7 @@ const Reportes = () => {
             <h2 className="mb-4">Reporte de Nómina y Asistencia</h2>
 
             {/* --- FILTROS --- */}
-            <Card className="shadow-sm mb-4" style={{ overflow: 'visible', position: 'relative', zIndex: 10 }}>
+            <Card className="shadow-sm mb-4 card-overflow-visible">
                 <Card.Body>
                     <Form onSubmit={handleGenerar}>
                         <Row className="align-items-end">
@@ -482,7 +483,7 @@ const Reportes = () => {
                     <Card className="shadow-sm">
                         <Card.Header className="bg-light fw-bold">Detalle Diario</Card.Header>
                         <div className="table-responsive">
-                            <Table hover className="mb-0 align-middle table-sm" style={{ fontSize: '0.85rem' }}>
+                            <Table hover className="mb-0 align-middle table-sm table-compact">
                                 <thead className="table-light">
                                     <tr>
                                         <th>Fecha</th>
@@ -495,8 +496,8 @@ const Reportes = () => {
                                         <th className="text-end">Neto Diario</th>
                                         <th className="text-end">Neto - Adelantos</th>
                                         <th className="text-end">Adelanto</th>
-                                        <th style={{ minWidth: '150px' }}>Nota</th>
-                                        <th style={{ minWidth: '150px' }}>Observación</th>
+                                        <th className="col-min-w--lg">Nota</th>
+                                        <th className="col-min-w--lg">Observación</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -541,14 +542,14 @@ const Reportes = () => {
                                                 <td className="text-end">
                                                     {datos.totalAdelantosDelDia > 0 ? `$${datos.totalAdelantosDelDia.toFixed(2)}` : '-'}
                                                 </td>
-                                                <td style={{ maxWidth: '150px' }}>
+                                                <td className="col-max-w">
                                                     {datos.notasAdelantos !== '-' ? (
                                                         <small className="text-muted">
                                                             {datos.notasAdelantos}
                                                         </small>
                                                     ) : '-'}
                                                 </td>
-                                                <td style={{ maxWidth: '150px' }}>
+                                                <td className="col-max-w">
                                                     <input
                                                         type="text"
                                                         className={`form-control form-control-sm ${dirtyObservaciones.has(idx) ? 'border-warning border-2' : ''}`}
